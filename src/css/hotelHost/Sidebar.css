@@ -1,0 +1,45 @@
+.sidebar_1 {
+    width: 260px; /* Giữ sidebar rộng */
+    min-height: 100vh;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 100;
+    background-color: black; /* Nền trắng */
+    color: black; /* Chữ màu đen */
+}
+
+.nav-link_1 {
+    color: black !important; /* Chữ đen */
+    transition: background-color 0.3s, color 0.3s;
+    padding: 10px 15px; /* Giảm padding ngang để căn trái hơn */
+    font-size: 16px; /* Tăng kích thước chữ */
+    width: 100%; /* Đảm bảo chiếm toàn bộ chiều ngang */
+    display: block; /* Đảm bảo các liên kết chiếm toàn bộ chiều ngang */
+    text-align: left;
+    margin-bottom: 10px; /* Căn chữ về bên trái */
+    text-decoration: none;
+}
+
+.nav-item_1 {
+    width: 100%; /* Đảm bảo mục menu mở rộng theo sidebar */
+    text-align: left;
+    margin-bottom: 10px; /* Căn trái toàn bộ nội dung */
+}
+
+.nav-link_1:hover, .nav-link_1.active {
+    background-color: #007bff; /* Khi chọn màu xanh */
+    color: white !important; /* Chữ trắng khi chọn */
+    text-decoration: none;
+    border-radius: 6px;
+}
+
+.upgrade-link_1 {
+    font-weight: bold;
+    margin-top: auto;
+    text-align: left; /* Căn trái */
+}

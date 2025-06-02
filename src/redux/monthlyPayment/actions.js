@@ -1,0 +1,6 @@
+const MonthlyPaymentActions = {
+  FETCH_MONTHLY_PAYMENTS: "FETCH_MONTHLY_PAYMENTS",
+  FETCH_MONTHLY_PAYMENTS_SUCCESS: "FETCH_MONTHLY_PAYMENTS_SUCCESS",
+};
+
+export default MonthlyPaymentActions;

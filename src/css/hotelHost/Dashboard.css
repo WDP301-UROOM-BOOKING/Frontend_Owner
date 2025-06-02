@@ -1,0 +1,203 @@
+Main Layout
+body {
+    margin: 0;
+    width: 100%;
+    font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    overflow-x: hidden;
+  }
+  
+  .main-content_1 {
+    flex-grow: 1;
+    min-height: 100vh;
+  }
+  
+  /* Navigation */
+  .nav-item {
+    margin-bottom: 5px;
+  }
+  
+  .nav-link {
+    border-radius: 5px;
+    padding: 10px;
+    transition: all 0.3s;
+  }
+  
+  .nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .nav-link.active {
+    background-color: rgba(255, 255, 255, 0.2);
+  }
+  
+  .upgrade-link {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 15px;
+    margin-top: 20px;
+  }
+  
+  /* Search and Profile */
+  .search-container {
+    position: relative;
+    margin-right: 20px;
+  }
+  
+  .search-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #adb5bd;
+  }
+  
+  .search-input {
+    padding-left: 35px;
+    border-radius: 20px;
+    background-color: rgba(255, 255, 255, 0.9);
+    border: none;
+    width: 250px;
+  }
+  
+  .profile-container {
+    display: flex;
+    align-items: center;
+  }
+  
+  .profile-img {
+    border: 2px solid white;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Cards */
+  .card {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s, box-shadow 0.3s;
+    margin-bottom: 20px;
+  }
+  
+  .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 7px 14px rgba(0, 0, 0, 0.1);
+  }
+  
+  .stat-card .card-body {
+    padding: 1.5rem;
+  }
+  .text-muted{
+    font-size: 20px;
+  }
+  
+  .stat-icon {
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(0, 123, 255, 0.1); /* Màu nền nhạt */
+    color: #007bff; /* Màu icon */
+    font-size: 1.5rem;
+  }
+  
+  
+  .traffic-icon {
+    background-color: rgba(233, 30, 99, 0.1);
+    color: #e91e63;
+  }
+  
+  .users-icon {
+    background-color: rgba(255, 152, 0, 0.1);
+    color: #ff9800;
+  }
+  
+  .sales-icon {
+    background-color: rgba(76, 175, 80, 0.1);
+    color: #4caf50;
+  }
+  
+  .performance-icon {
+    background-color: rgba(33, 150, 243, 0.1);
+    color: #2196f3;
+  }
+  
+  .chart-card, .table-card {
+    padding: 10px;
+  }
+  
+  /* Tables */
+  .table {
+    margin-bottom: 0;
+  }
+  
+  .table th {
+    border-top: none;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+    color: #8898aa;
+  }
+  
+  .table td {
+    vertical-align: middle;
+    font-weight: 500;
+  }
+  
+  /* Buttons */
+  .btn-primary {
+    background-color: #5e72e4;
+    border-color: #5e72e4;
+  }
+  
+  .btn-outline-primary {
+    color: #5e72e4;
+    border-color: #5e72e4;
+  }
+  
+  .btn-sm {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.2rem;
+  }
+  
+  /* Responsive */
+  @media (max-width: 992px) {
+    .sidebar {
+      width: 70px;
+      padding: 15px 10px;
+    }
+    
+    .brand-text, .nav-link span {
+      display: none;
+    }
+    
+    .main-content_1 {
+      margin-left: 70px;
+    }
+    
+    .search-input {
+      width: 180px;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .sidebar {
+      width: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    
+    .main-content {
+      margin-left: 0;
+    }
+    
+    .search-input {
+      width: 150px;
+    }
+    
+    .profile-container span {
+      display: none;
+    }
+  }

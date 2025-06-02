@@ -1,0 +1,207 @@
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: #333;
+  }
+  
+  /* Tabs */
+  .nav-tabs .nav-link.active {
+    color: #0071c2;
+    border-bottom: 3px solid #0071c2;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    font-weight: 500;
+  }
+  
+  .nav-tabs .nav-link {
+    color: #6c757d;
+    border: none;
+  }
+  
+
+  .rating-box {
+    background-color: #e6f4ff;
+    border-radius: 8px;
+    width: 80px;
+    height: 80px;
+  }
+  
+  .rating-number {
+    color: #0194f3;
+    font-size: 36px;
+    font-weight: bold;
+    line-height: 1;
+  }
+  
+  .rating-title {
+    color: #0194f3;
+    font-size: 24px;
+    font-weight: bold;
+  }
+  
+  .rating-count {
+    color: #333;
+    font-size: 14px;
+    margin-top: 4px;
+  }
+  
+  .rating-source {
+    color: #687176;
+    font-size: 12px;
+  }
+  
+  .traveloka-text {
+    color: #0194f3;
+    margin-left: 4px;
+  }
+  
+ 
+  /* Rating Details */
+  .rating-details {
+    padding: 0 15px;
+  }
+  
+  .rating-item {
+    margin-bottom: 15px;
+  }
+  
+  .progress {
+    height: 8px;
+    border-radius: 4px;
+  }
+  
+  .progress-bar {
+    background-color: #0071c2;
+  }
+  
+  /* Filter Options */
+  .filter-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  
+  .filter-checkbox {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    padding: 5px 15px;
+    display: inline-flex;
+    align-items: center;
+  }
+  
+  .filter-checkbox .form-check-input {
+    margin-right: 5px;
+  }
+  
+  .filter-checkbox .form-check-label {
+    margin-bottom: 0;
+    font-size: 14px;
+  }
+  
+  /* Sort Options */
+  .sort-dropdown {
+    display: flex;
+    align-items: center;
+  }
+  
+  .sort-label {
+    font-size: 14px;
+    margin-right: 10px;
+    color: #6c757d;
+  }
+  
+  .dropdown-toggle {
+    width: 100%;
+    text-align: left;
+    font-size: 14px;
+    background-color: white;
+    border-color: #ddd;
+  }
+  
+  /* Reviews */
+  .review-card {
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+  
+  .reviewer-avatar img {
+    border: 1px solid #ddd;
+  }
+  
+  .rating-badge {
+    background-color: #0071c2;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  
+  .review-date {
+    color: #6c757d;
+    font-size: 14px;
+  }
+  
+  .review-content {
+    margin: 15px 0;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  
+  .review-source {
+    color: #6c757d;
+    font-size: 12px;
+  }
+  
+  .review-source a {
+    color: #0071c2;
+    text-decoration: none;
+  }
+  
+  /* Pagination */
+  .pagination {
+    display: flex;
+    gap: 5px;
+  }
+  
+  .page-btn {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-weight: 500;
+  }
+  
+  .page-btn.active {
+    background-color: #0071c2;
+    border-color: #0071c2;
+  }
+  
+  /* Custom Form Checkboxes */
+  .form-check-input {
+    margin-top: 0;
+  }
+  
+  .form-check-input:checked {
+    background-color: #0071c2;
+    border-color: #0071c2;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .sort-dropdown {
+      margin-bottom: 15px;
+    }
+  
+    .filter-options {
+      overflow-x: auto;
+      flex-wrap: nowrap;
+      padding-bottom: 10px;
+    }
+  }
+  
+  

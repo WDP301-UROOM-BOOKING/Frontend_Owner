@@ -1,0 +1,278 @@
+.calendar-container {
+  overflow-x: auto;
+  padding-bottom: 1rem;
+  width: 100%;
+}
+
+.calendar-grid {
+  /* display: table; */
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 1000px;
+  display: flex;
+  flex-direction: column;
+  /* min-width: 700px; */
+}
+
+.calendar-header,
+.calendar-row {
+  display: table-row;
+}
+
+.calendar-cell {
+  display: table-cell;
+  border: 1px solid #dee2e6;
+  padding: 8px;
+  vertical-align: middle;
+  min-width: 100px;
+}
+
+.room-header {
+  /* background-color: #f8f9fa; */
+  font-weight: bold;
+  text-align: center;
+  min-width: 150px;
+}
+
+.room-actions {
+  font-size: 0.7rem;
+  color: #6c757d;
+  margin-top: 5px;
+}
+
+.date-header {
+  background-color: #f8f9fa;
+  text-align: center;
+  font-weight: bold;
+  padding: 10px;
+}
+
+.date-header.weekend {
+  background-color: #e9ecef;
+}
+
+.day-of-week {
+  font-size: 0.8rem;
+  color: #6c757d;
+}
+
+.date {
+  font-size: 0.9rem;
+}
+
+.room-info {
+  background-color: #f8f9fa;
+  min-width: 180px;
+  position: relative;
+}
+
+.room-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.room-menu-toggle {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+}
+
+.room-number {
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.room-type {
+  margin: 5px 0;
+}
+
+.room-capacity {
+  font-size: 0.8rem;
+  color: #6c757d;
+  margin-bottom: 3px;
+}
+
+.room-price {
+  font-size: 0.8rem;
+  color: #198754;
+  font-weight: bold;
+}
+
+.date-cell {
+  text-align: center;
+  cursor: pointer;
+  height: 80px;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.date-cell:hover {
+  background-color: rgba(0, 123, 255, 0.1);
+}
+
+.date-cell.weekend {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.date-cell.booked {
+  background-color: rgba(220, 53, 69, 0.1);
+}
+
+.date-cell.booked:hover {
+  background-color: rgba(220, 53, 69, 0.2);
+}
+
+.date-cell.available {
+  background-color: rgba(40, 167, 69, 0.05);
+}
+
+.date-cell.available:hover {
+  background-color: rgba(40, 167, 69, 0.15);
+}
+
+.date-cell.pending {
+  background-color: rgba(255, 193, 7, 0.1);
+}
+
+.date-cell.pending:hover {
+  background-color: rgba(255, 193, 7, 0.2);
+}
+
+.booking-info {
+  font-size: 0.8rem;
+  line-height: 1.2;
+  position: relative;
+}
+
+.guest-name {
+  font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.status-icon {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  font-size: 0.7rem;
+}
+
+.pending-icon {
+  color: #ffc107;
+}
+
+.booked-icon {
+  color: #dc3545;
+}
+
+.check-action-btn {
+  margin-top: 5px;
+  font-size: 0.7rem;
+  padding: 2px 5px;
+  width: 100%;
+}
+
+.check-in-badge,
+.check-out-badge {
+  font-size: 0.7rem;
+  padding: 1px 4px;
+  border-radius: 3px;
+  margin-top: 2px;
+  display: inline-block;
+}
+
+.check-in-badge {
+  background-color: #28a745;
+  color: white;
+}
+
+.check-out-badge {
+  background-color: #dc3545;
+  color: white;
+}
+
+.available-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.available-icon {
+  color: #28a745;
+  opacity: 0.5;
+}
+
+.legend {
+  margin-top: 0.5rem;
+}
+
+.legend-box {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  margin-right: 5px;
+  border: 1px solid #dee2e6;
+  vertical-align: middle;
+}
+
+.legend-box.available {
+  background-color: rgba(40, 167, 69, 0.05);
+}
+
+.legend-box.booked {
+  background-color: rgba(220, 53, 69, 0.1);
+}
+
+.legend-box.pending {
+  background-color: rgba(255, 193, 7, 0.1);
+}
+
+.booking-details {
+  margin-top: 1rem;
+}
+
+.detail-item {
+  display: flex;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 0.5rem;
+}
+
+.detail-label {
+  font-weight: bold;
+  width: 100px;
+}
+
+.detail-value {
+  flex: 1;
+}
+
+.empty-state {
+  display: table-row;
+}
+
+.empty-message {
+  display: table-cell;
+  text-align: center;
+  padding: 2rem;
+  color: #6c757d;
+}
+
+.availability-summary {
+  border-radius: 0.5rem;
+
+}
+
+@media (max-width: 768px) {
+  .calendar-filters .row > div {
+    margin-bottom: 1rem;
+  }
+}
+
+
+
+
+

@@ -1,0 +1,88 @@
+.pending-container1 {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #f8f9fa;
+  }
+  
+  .pending-content1 {
+    max-width: 800px;
+    padding: 40px;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+  }
+  
+  .clock-icon1 {
+    margin-bottom: 30px;
+    color: #f8a100;
+  }
+  
+  .pending-title1 {
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: #333;
+  }
+  
+  .pending-subtitle1 {
+    margin-bottom: 30px;
+    color: #555;
+    font-weight: 300;
+  }
+  
+  .pending-details1 {
+    margin-bottom: 40px;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+  }
+  
+  .detail-item1 {
+    margin-bottom: 15px;
+    font-size: 20px;
+    text-align: left;
+  }
+  
+  .detail-label1 {
+    font-weight: 600;
+    color: #555;
+  }
+  
+  .detail-value1 {
+    font-weight: 500;
+  }
+  
+  .pending-actions1 {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+  }
+  
+  .home-btn1,
+  .contact-btn1 {
+    font-size: 18px;
+    padding: 10px 20px;
+    border-radius: 5px;
+  }
+  
+  @media (max-width: 768px) {
+    .pending-title1 {
+      font-size: 40px !important;
+    }
+  
+    .pending-subtitle1 {
+      font-size: 24px !important;
+    }
+  
+    .detail-item1 {
+      font-size: 16px;
+    }
+  
+    .clock-icon svg1 {
+      width: 150px;
+      height: 150px;
+    }
+  }
+  
+  
