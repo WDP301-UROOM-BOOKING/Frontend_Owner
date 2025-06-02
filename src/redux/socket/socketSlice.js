@@ -23,8 +23,9 @@ const socketSlice = createSlice({
 export const { setSocket, clearSocket } = socketSlice.actions;
 
 export const initializeSocket = () => (dispatch, getState) => {
-  const existingSocket = getState()?.socket?.socket;
-
+  console.log("getState: ", getState());
+  const existingSocket = getState()?.Socket?.socket;
+  console.log("Existing socket: ", existingSocket);
   if (existingSocket) {
     console.log("Already has connection!");
     return;
@@ -42,8 +43,8 @@ export const initializeSocket = () => (dispatch, getState) => {
 };
 
 export const disconnectSocket = () => (dispatch, getState) => {
-  const socket = getState().socket.socket;
-
+  const socket = getState()?.Socket?.socket;
+  console.log("socket: ", socket);
   if (socket) {
     console.log("Disconnecting socket...");
     socket.disconnect();

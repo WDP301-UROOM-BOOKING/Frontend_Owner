@@ -37,18 +37,28 @@ import ViewInformation from "@pages/hotel_host/information/components/ViewInform
 import VerifyCodeRegisterPage from "@pages/hotel_host/login_register/VerifyCodeRegisterPage";
 import { useEffect } from "react";
 import { useAppSelector } from "@redux/store";
+import { useDispatch } from "react-redux";
+import { initializeSocket } from "@redux/socket/socketSlice";
 
 function App() {
   useEffect(() => {
     document.title = "Uroom Owner";
   }, []);
 
+  const dispatch = useDispatch();
   const Socket = useAppSelector((state) => state.Socket.socket);
   const Auth = useAppSelector((state) => state.Auth.Auth);
 
   useEffect(() => {
-    if (!Socket || !Auth?._id) return;
+    if(Auth?._id === -1) return;
+    dispatch(initializeSocket());
+  }, [Auth?._id]);
 
+  useEffect(() => {
+    if (!Socket) return;
+    if(Auth?._id === -1) return;
+
+    console.log("Socket initialized:", Socket.id);
     Socket.emit("register", Auth._id);
 
     const handleForceJoinRoom = ({ roomId, partnerId }) => {
@@ -56,9 +66,6 @@ function App() {
         userId: Auth._id,
         partnerId,
       });
-
-      // Optional: tự mở khung chat với partnerId nếu chưa mở
-      // dispatch(setSelectedUser(partnerId)); hoặc setSelectedUser(partnerId)
     };
 
     Socket.on("force-join-room", handleForceJoinRoom);
@@ -67,6 +74,7 @@ function App() {
       Socket.off("force-join-room", handleForceJoinRoom);
     };
   }, [Socket, Auth?._id]);
+  
   return (
     <Router>
       <Routes>

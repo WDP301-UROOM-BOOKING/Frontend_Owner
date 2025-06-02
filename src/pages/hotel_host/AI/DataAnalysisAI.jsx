@@ -31,6 +31,7 @@ import DashBoardPage from "../dash_board/DashBoardPage";
 import InsightAiPage from "./InSightAiPage";
 import RevenuePage from "../revenue/RevenuePage";
 import AuthActions from "@redux/auth/actions";
+import { disconnectSocket } from "@redux/socket/socketSlice";
 
 ChartJS.register(
   CategoryScale,
@@ -57,6 +58,8 @@ function App() {
   useEffect(() => {
     setSearchParams({ tab: activeTab });
   }, [activeTab, setSearchParams]);
+  const Socket = useAppSelector((state) => state.Socket.socket);
+
   return (
     <>
       <div className="d-flex">
@@ -280,6 +283,7 @@ function App() {
                     <Dropdown.Menu>
                       <Dropdown.Item
                         onClick={() => {
+                          dispatch(disconnectSocket());
                           dispatch({ type: AuthActions.LOGOUT });
                           navigate(Routers.HomeHotel, {
                             state: {
@@ -288,7 +292,7 @@ function App() {
                           });
                         }}
                       >
-                        Logout
+                        Đăng xuất
                       </Dropdown.Item>
                     </Dropdown.Menu>
                   </Dropdown>

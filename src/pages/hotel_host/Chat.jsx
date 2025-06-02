@@ -24,7 +24,6 @@ function Chat() {
   }, [location, navigate]);
 
   const Auth = useAppSelector((state) => state.Auth.Auth);
-  const Socket = useAppSelector((state) => state.Socket.socket);
   const dispatch = useDispatch();
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState();
@@ -73,9 +72,8 @@ function Chat() {
     }
   };
 
-  useEffect(() => {
-    dispatch(initializeSocket());
-  }, [dispatch]);
+
+  const Socket = useAppSelector((state) => state.Socket.socket);
 
   useEffect(() => {
     fetchAllUser();
@@ -93,21 +91,23 @@ function Chat() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  // Join room khi selectedUser thay đổi
+  useEffect(() => {
+    console.log("Socket ABC:", Socket?.id);
+    if (!Socket) return;
+    if (Auth?._id === -1) return;
+    if (!selectedUser?._id) return;
+    
+    Socket.emit("join-room", {
+      userId: Auth._id,
+      partnerId: selectedUser._id,
+    });
+  }, [Socket, Auth?._id, selectedUser?._id]);
+
+  // Nhận message và markAsRead
   useEffect(() => {
     if (!Socket || !Auth?._id) return;
 
-    // Gửi userId để đăng ký socket
-    Socket.emit("register", Auth._id);
-
-    // Nếu có selectedUser thì join vào room chung
-    if (selectedUser?._id) {
-      Socket.emit("join-room", {
-        userId: Auth._id,
-        partnerId: selectedUser._id,
-      });
-    }
-
-    // Nhận tin nhắn riêng
     const handleReceiveMessage = (msg) => {
       if (Auth._id === msg.receiverId && msg.senderId === selectedUser?._id) {
         setUserMessages((prev) => [...prev, msg]);
@@ -115,7 +115,6 @@ function Chat() {
       fetchAllUser();
     };
 
-    // Nhận cập nhật tin nhắn đã đọc
     const handleMarkAsRead = (msg) => {
       if (selectedUser?._id == msg.senderId) {
         setUserMessages((prevMessages) =>
@@ -142,7 +141,6 @@ function Chat() {
     };
   }, [Socket, Auth?._id, selectedUser?._id]);
 
-  console.log("users: ", users);
   // Gửi tin nhắn
   const sendMessage = (e) => {
     e.preventDefault();
@@ -425,7 +423,6 @@ function Chat() {
                         </span>
                       </div>
                     </div>
-
                   </div>
 
                   {/* Message status (only for the last message from current user) */}
