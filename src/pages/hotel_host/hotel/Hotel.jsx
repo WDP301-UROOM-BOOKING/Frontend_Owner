@@ -189,6 +189,10 @@ function Hotel({ show, handleClose, selectedHotelId }) {
   const [checkOutEnd, setCheckOutEnd] = useState("");
   const [showModal, setShowModal] = useState(false);
 
+  console.log("Check-in Start:", checkInStart);
+  console.log("Check-in End:", checkInEnd);
+  console.log("Check-out Start:", checkOutStart);
+  console.log("Check-out End:", checkOutEnd);
   useEffect(() => {
     if (hotelinfo?.[0]) {
       setCheckInStart(hotelinfo[0].checkInStart);
@@ -496,11 +500,25 @@ function Hotel({ show, handleClose, selectedHotelId }) {
                     value={checkInStart}
                     onChange={(e) => setCheckInStart(e.target.value)}
                   >
-                    <option>14:00</option>
-                    <option>15:00</option>
-                    <option>16:00</option>
-                    <option>17:00</option>
-                    <option>18:00</option>
+                    <option value="06:00">06:00</option>
+                    <option value="07:00">07:00</option>
+                    <option value="08:00">08:00</option>
+                    <option value="09:00">09:00</option>
+                    <option value="10:00">10:00</option>
+                    <option value="11:00">11:00</option>
+                    <option value="12:00">12:00</option>
+                    <option value="13:00">13:00</option>
+                    <option value="14:00">14:00</option>
+                    <option value="15:00">15:00</option>
+                    <option value="16:00">16:00</option>
+                    <option value="17:00">17:00</option>
+                    <option value="18:00">18:00</option>
+                    <option value="19:00">19:00</option>
+                    <option value="20:00">20:00</option>
+                    <option value="21:00">21:00</option>
+                    <option value="22:00">22:00</option>
+                    <option value="23:00">23:00</option>
+                    <option value="00:00">00:00</option>
                   </Form.Select>
                 </Col>
                 <Col>
@@ -509,10 +527,25 @@ function Hotel({ show, handleClose, selectedHotelId }) {
                     value={checkInEnd}
                     onChange={(e) => setCheckInEnd(e.target.value)}
                   >
-                    <option>16:00</option>
-                    <option>17:00</option>
-                    <option>18:00</option>
-                    <option>19:00</option>
+                    <option value="06:00">06:00</option>
+                    <option value="07:00">07:00</option>
+                    <option value="08:00">08:00</option>
+                    <option value="09:00">09:00</option>
+                    <option value="10:00">10:00</option>
+                    <option value="11:00">11:00</option>
+                    <option value="12:00">12:00</option>
+                    <option value="13:00">13:00</option>
+                    <option value="14:00">14:00</option>
+                    <option value="15:00">15:00</option>
+                    <option value="16:00">16:00</option>
+                    <option value="17:00">17:00</option>
+                    <option value="18:00">18:00</option>
+                    <option value="19:00">19:00</option>
+                    <option value="20:00">20:00</option>
+                    <option value="21:00">21:00</option>
+                    <option value="22:00">22:00</option>
+                    <option value="23:00">23:00</option>
+                    <option value="00:00">00:00</option>
                   </Form.Select>
                 </Col>
               </Row>
@@ -530,9 +563,25 @@ function Hotel({ show, handleClose, selectedHotelId }) {
                     value={checkOutStart}
                     onChange={(e) => setCheckOutStart(e.target.value)}
                   >
-                    <option>07:00</option>
-                    <option>08:00</option>
-                    <option>09:00</option>
+                    <option value="06:00">06:00</option>
+                    <option value="07:00">07:00</option>
+                    <option value="08:00">08:00</option>
+                    <option value="09:00">09:00</option>
+                    <option value="10:00">10:00</option>
+                    <option value="11:00">11:00</option>
+                    <option value="12:00">12:00</option>
+                    <option value="13:00">13:00</option>
+                    <option value="14:00">14:00</option>
+                    <option value="15:00">15:00</option>
+                    <option value="16:00">16:00</option>
+                    <option value="17:00">17:00</option>
+                    <option value="18:00">18:00</option>
+                    <option value="19:00">19:00</option>
+                    <option value="20:00">20:00</option>
+                    <option value="21:00">21:00</option>
+                    <option value="22:00">22:00</option>
+                    <option value="23:00">23:00</option>
+                    <option value="00:00">00:00</option>
                   </Form.Select>
                 </Col>
                 <Col>
@@ -541,9 +590,25 @@ function Hotel({ show, handleClose, selectedHotelId }) {
                     value={checkOutEnd}
                     onChange={(e) => setCheckOutEnd(e.target.value)}
                   >
-                    <option>10:00</option>
-                    <option>11:00</option>
-                    <option>12:00</option>
+                    <option value="06:00">06:00</option>
+                    <option value="07:00">07:00</option>
+                    <option value="08:00">08:00</option>
+                    <option value="09:00">09:00</option>
+                    <option value="10:00">10:00</option>
+                    <option value="11:00">11:00</option>
+                    <option value="12:00">12:00</option>
+                    <option value="13:00">13:00</option>
+                    <option value="14:00">14:00</option>
+                    <option value="15:00">15:00</option>
+                    <option value="16:00">16:00</option>
+                    <option value="17:00">17:00</option>
+                    <option value="18:00">18:00</option>
+                    <option value="19:00">19:00</option>
+                    <option value="20:00">20:00</option>
+                    <option value="21:00">21:00</option>
+                    <option value="22:00">22:00</option>
+                    <option value="23:00">23:00</option>
+                    <option value="00:00">00:00</option>
                   </Form.Select>
                 </Col>
               </Row>
