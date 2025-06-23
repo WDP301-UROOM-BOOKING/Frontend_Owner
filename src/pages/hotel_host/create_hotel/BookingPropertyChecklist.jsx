@@ -10,9 +10,9 @@ import ConfirmationModal from "@components/ConfirmationModal";
 
 function BookingPropertyChecklist() {
   const navigate = useNavigate();
-  const dispatch= useDispatch();
+  const dispatch = useDispatch();
   const [showModal, setShowModal] = React.useState(false);
-  const createHotel = useAppSelector((state) => state.Hotel.createHotel)
+  const createHotel = useAppSelector((state) => state.Hotel.createHotel);
   const handleComfirm = () => {
     dispatch({
       type: HotelActions.CREATE_HOTEL,
@@ -23,8 +23,10 @@ function BookingPropertyChecklist() {
         },
       },
     });
+    dispatch({ type: HotelActions.CLEAR_HOTEL_CREATE });
+
     navigate(Routers.WaitPendingPage);
-  }
+  };
 
   return (
     <div style={styles.bookingApp}>
@@ -75,8 +77,45 @@ function BookingPropertyChecklist() {
             </Col>
           </Row>
         </div>
-
         {/* Step 2 */}
+        {/* <div style={styles.checklistItemLast}>
+          <Row className="align-items-center">
+            <Col xs="auto">
+              <div style={styles.stepIcon}>
+                <span
+                  role="img"
+                  aria-label="document"
+                  style={{ fontSize: "24px" }}
+                >
+                  📄
+                </span>
+              </div>
+            </Col>
+            <Col>
+              <div style={styles.stepNumber}>Bước 2</div>
+              <div style={styles.stepTitle}>Giấy tờ kinh doanh</div>
+              <div style={styles.stepDescription}>
+                Nhập thông tin thanh toán và hóa đơn trước khi mở để nhận đặt
+                phòng.
+                <br />
+                <span style={{ fontStyle: "italic", color: "#888" }}>
+                  * Có thể thêm sau đó
+                </span>
+              </div>
+            </Col>
+            <Col xs="auto">
+              <Button
+                style={styles.secondaryButton}
+                onClick={() => {
+                  navigate(Routers.DocumentUpload);
+                }}
+              >
+                Thêm các thông tin cuối cùng
+              </Button>
+            </Col>
+          </Row>
+        </div> */}
+        {/* Step 3 */}
         <div style={styles.checklistItem}>
           <Row className="align-items-center">
             <Col xs="auto">
@@ -92,6 +131,10 @@ function BookingPropertyChecklist() {
               <div style={styles.stepDescription}>
                 Hãy cho chúng tôi biết về phòng đầu tiên của Quý vị. Sau khi đã
                 thiết lập xong một căn, Quý vị có thể thêm nhiều căn nữa.
+                <br />
+                <span style={{ fontStyle: "italic", color: "#888" }}>
+                  * Có thể thêm sau đó
+                </span>
               </div>
             </Col>
             <Col xs="auto">
@@ -107,7 +150,7 @@ function BookingPropertyChecklist() {
           </Row>
         </div>
 
-        {/* Step 3 */}
+        {/* Step 4 */}
         <div style={styles.checklistItem}>
           <Row className="align-items-center">
             <Col xs="auto">
@@ -127,6 +170,10 @@ function BookingPropertyChecklist() {
               <div style={styles.stepDescription}>
                 Những dịch vụ đi kèm với phòng của quý vị. Sau khi đã thiết lập
                 xong tối thiểu 1 phòng.
+                <br />
+                <span style={{ fontStyle: "italic", color: "#888" }}>
+                  * Có thể thêm sau đó
+                </span>
               </div>
             </Col>
             <Col xs="auto">
@@ -135,40 +182,6 @@ function BookingPropertyChecklist() {
           </Row>
         </div>
 
-        {/* Step 4 */}
-        <div style={styles.checklistItemLast}>
-          <Row className="align-items-center">
-            <Col xs="auto">
-              <div style={styles.stepIcon}>
-                <span
-                  role="img"
-                  aria-label="document"
-                  style={{ fontSize: "24px" }}
-                >
-                  📄
-                </span>
-              </div>
-            </Col>
-            <Col>
-              <div style={styles.stepNumber}>Bước 4</div>
-              <div style={styles.stepTitle}>Những bước cuối cùng</div>
-              <div style={styles.stepDescription}>
-                Nhập thông tin thanh toán và hóa đơn trước khi mở để nhận đặt
-                phòng.
-              </div>
-            </Col>
-            <Col xs="auto">
-              <Button
-                style={styles.secondaryButton}
-                onClick={() => {
-                  navigate(Routers.DocumentUpload);
-                }}
-              >
-                Thêm các thông tin cuối cùng
-              </Button>
-            </Col>
-          </Row>
-        </div>
         {/* Confirmation Button */}
         <div style={{ textAlign: "right", marginTop: 20 }}>
           <Button
@@ -180,15 +193,15 @@ function BookingPropertyChecklist() {
             Xác nhận hoàn tất
           </Button>
         </div>
-      <ConfirmationModal
-        show={showModal}
-        onHide={() => setShowModal(false)}
-        onConfirm={handleComfirm}
-        title="Xác nhận tạo chỗ nghỉ"
-        message="Bạn có chắc chắn muốn tạo chỗ nghỉ này không? Hành động này sẽ không thể hoàn tác."
-        confirmButtonText="Tạo chỗ nghỉ"
-        type="warning"
-      />
+        <ConfirmationModal
+          show={showModal}
+          onHide={() => setShowModal(false)}
+          onConfirm={handleComfirm}
+          title="Xác nhận tạo chỗ nghỉ"
+          message="Bạn có chắc chắn muốn tạo chỗ nghỉ này không? Hành động này sẽ không thể hoàn tác."
+          confirmButtonText="Tạo chỗ nghỉ"
+          type="warning"
+        />
       </Container>
     </div>
   );

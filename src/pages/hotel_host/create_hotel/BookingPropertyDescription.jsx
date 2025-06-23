@@ -1,6 +1,6 @@
 import React from "react"
 import { useState, useEffect } from "react"
-import { Navbar, Container, Button, Form, Card, ProgressBar, Row, Col, Alert } from "react-bootstrap"
+import { Navbar, Container, Button, Form, Card, ProgressBar, Row, Col, Alert, Spinner } from "react-bootstrap"
 import "bootstrap/dist/css/bootstrap.min.css"
 import { ArrowLeft, Upload, X, Star } from "lucide-react"
 import { useNavigate } from "react-router-dom"
@@ -8,6 +8,7 @@ import { useAppDispatch, useAppSelector } from "@redux/store"
 import { showToast, ToastProvider } from "@components/ToastContainer"
 import HotelActions from "@redux/hotel/actions"
 import * as Routers from "../../../utils/Routes";
+import Factories from "@redux/hotel/factories"; // Import factories
 
 // Star rating options
 const starOptions = [
@@ -23,13 +24,16 @@ export default function BookingPropertyDescription() {
   const dispatch = useAppDispatch()
   const createHotel = useAppSelector((state) => state.Hotel.createHotel)
   console.log("createHotel:   ", createHotel);
+  
   // Initialize state with values from Redux store
   const [star, setStar] = useState(createHotel?.star || 1)
   const [description, setDescription] = useState(createHotel?.description || "")
   const [images, setImages] = useState(createHotel?.images || [])
-
+  const [localImages, setLocalImages] = useState([]) // For local file preview
+  
   const [dragActive, setDragActive] = useState(false)
   const [validationErrors, setValidationErrors] = useState([])
+  const [isUploading, setIsUploading] = useState(false)
 
   // Validate form
   const validateForm = () => {
@@ -41,8 +45,9 @@ export default function BookingPropertyDescription() {
       errors.push("Mô tả khách sạn phải có ít nhất 50 ký tự")
     }
 
-    if (images.length < 5) {
-      errors.push(`Vui lòng upload đủ 5 hình ảnh (hiện tại: ${images.length}/5)`)
+    const totalImages = images.length + localImages.length
+    if (totalImages < 5) {
+      errors.push(`Vui lòng upload đủ 5 hình ảnh (hiện tại: ${totalImages}/5)`)
     }
 
     return errors
@@ -52,7 +57,7 @@ export default function BookingPropertyDescription() {
   useEffect(() => {
     const errors = validateForm()
     setValidationErrors(errors)
-  }, [star, description, images])
+  }, [star, description, images, localImages])
 
   const handleImageChange = (event) => {
     const files = Array.from(event.target.files || [])
@@ -77,16 +82,85 @@ export default function BookingPropertyDescription() {
     }
 
     // Check total number of images
-    if (images.length + files.length > 5) {
+    const totalImages = images.length + localImages.length + files.length
+    if (totalImages > 5) {
       showToast.warning("Chỉ được upload tối đa 5 hình ảnh")
       return
     }
 
-    setImages([...images, ...files])
+    // Create preview objects for local files
+    const filesWithPreview = files.map(file => ({
+      file: file,
+      preview: URL.createObjectURL(file),
+      name: file.name,
+      size: file.size,
+      isLocal: true
+    }))
+
+    setLocalImages(prev => [...prev, ...filesWithPreview])
   }
 
-  const removeImage = (index) => {
-    setImages(images.filter((_, i) => i !== index))
+  const removeLocalImage = (index) => {
+    const imageToRemove = localImages[index]
+    if (imageToRemove && imageToRemove.preview) {
+      URL.revokeObjectURL(imageToRemove.preview)
+    }
+    setLocalImages(localImages.filter((_, i) => i !== index))
+  }
+
+  const removeUploadedImage = async (index) => {
+    const imageToRemove = images[index]
+    
+    try {
+      // Call API to delete from Cloudinary
+      const response = await Factories.deleteHotelImages([imageToRemove.public_ID])
+      
+      if (response.data && !response.data.error) {
+        // Remove from local state
+        setImages(images.filter((_, i) => i !== index))
+        showToast.success("Đã xóa ảnh thành công!")
+      } else {
+        throw new Error(response.data?.message || "Không thể xóa ảnh")
+      }
+    } catch (error) {
+      console.error('Error deleting image:', error)
+      showToast.error("Có lỗi xảy ra khi xóa ảnh: " + error.message)
+    }
+  }
+
+  const uploadImages = async () => {
+    if (localImages.length === 0) return []
+
+    try {
+      setIsUploading(true)
+      
+      const formData = new FormData()
+      localImages.forEach((imgObj) => {
+        formData.append('images', imgObj.file)
+      })
+
+      const response = await Factories.uploadHotelImages(formData)
+      
+      if (response.data && !response.data.error) {
+        // Cleanup local previews
+        localImages.forEach(img => {
+          if (img.preview) {
+            URL.revokeObjectURL(img.preview)
+          }
+        })
+    
+        showToast.success("Upload ảnh thành công!")
+        return response.data.data.images
+      } else {
+        throw new Error(response.data?.message || "Upload failed")
+      }
+    } catch (error) {
+      console.error('Error uploading images:', error)
+      showToast.error("Có lỗi xảy ra khi upload ảnh: " + error.message)
+      return []
+    } finally {
+      setIsUploading(false)
+    }
   }
 
   const handleDrag = (e) => {
@@ -110,7 +184,7 @@ export default function BookingPropertyDescription() {
     }
   }
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     const errors = validateForm()
 
     if (errors.length > 0) {
@@ -118,19 +192,41 @@ export default function BookingPropertyDescription() {
       return
     }
 
-    // Dispatch action to save data
-    dispatch({
-      type: HotelActions.SAVE_HOTEL_DESCRIPTION_CREATE,
-      payload: {
-        star,
-        description: description.trim(),
-        images: createHotel.images,
-        checkCreateHotel: true,
-      },
-    })
+    try {
+      let uploadedImages = []
+      
+      // Upload new images if any
+      if (localImages.length > 0) {
+        uploadedImages = await uploadImages()
+        if (uploadedImages.length === 0) {
+          return // Upload failed
+        }
+      }
 
-    showToast.success("Đã lưu thông tin mô tả khách sạn thành công!")
-    navigate(Routers.BookingPropertyChecklist)
+      // Combine existing and new images
+      const allImages = [...images, ...uploadedImages]
+      
+      // Clear local images after successful upload
+      setLocalImages([])
+
+      // Dispatch action to save data
+      dispatch({
+        type: HotelActions.SAVE_HOTEL_DESCRIPTION_CREATE,
+        payload: {
+          star,
+          description: description.trim(),
+          images: allImages,
+          checkCreateHotel: true,
+        },
+      })
+
+      showToast.success("Đã lưu thông tin mô tả khách sạn thành công!")
+      navigate(Routers.BookingPropertyChecklist)
+      
+    } catch (error) {
+      console.error('Error in handleContinue:', error)
+      showToast.error("Có lỗi xảy ra: " + error.message)
+    }
   }
 
   const handleBack = () => {
@@ -140,14 +236,33 @@ export default function BookingPropertyDescription() {
       payload: {
         star,
         description: description.trim(),
-        images: createHotel.images,
+        images: images, // Only save uploaded images, not local previews
       },
+    })
+
+    // Cleanup local images
+    localImages.forEach(img => {
+      if (img.preview) {
+        URL.revokeObjectURL(img.preview)
+      }
     })
 
     navigate(Routers.BookingPropertyCheckInOut)
   }
 
+  // Cleanup URLs when component unmounts
+  useEffect(() => {
+    return () => {
+      localImages.forEach(img => {
+        if (img.preview) {
+          URL.revokeObjectURL(img.preview)
+        }
+      })
+    }
+  }, [])
+
   const isFormValid = validationErrors.length === 0
+  const totalImages = images.length + localImages.length
 
   return (
     <div className="booking-app">
@@ -197,6 +312,16 @@ export default function BookingPropertyDescription() {
                     <li key={index}>{error}</li>
                   ))}
                 </ul>
+              </Alert>
+            )}
+
+            {/* Loading Indicator */}
+            {isUploading && (
+              <Alert variant="info" className="mb-4">
+                <div className="d-flex align-items-center">
+                  <Spinner animation="border" size="sm" className="me-2" />
+                  Đang upload ảnh...
+                </div>
               </Alert>
             )}
 
@@ -266,13 +391,13 @@ export default function BookingPropertyDescription() {
                     <Form.Group>
                       <Form.Label className="fw-bold">
                         Hình ảnh khách sạn <span className="text-danger">*</span>
-                        <span className="text-muted ms-2">({images.length}/5 ảnh)</span>
+                        <span className="text-muted ms-2">({totalImages}/5 ảnh)</span>
                       </Form.Label>
 
                       {/* Upload Area */}
                       <div
                         className={`upload-area ${dragActive ? "drag-active" : ""} ${
-                          images.length >= 5 ? "disabled" : ""
+                          totalImages >= 5 ? "disabled" : ""
                         }`}
                         onDragEnter={handleDrag}
                         onDragLeave={handleDrag}
@@ -287,7 +412,7 @@ export default function BookingPropertyDescription() {
                             multiple
                             accept="image/*"
                             onChange={handleImageChange}
-                            disabled={images.length >= 5}
+                            disabled={totalImages >= 5 || isUploading}
                             className="d-none"
                             id="image-upload"
                           />
@@ -295,23 +420,58 @@ export default function BookingPropertyDescription() {
                             as="label"
                             htmlFor="image-upload"
                             variant="outline-primary"
-                            disabled={images.length >= 5}
+                            disabled={totalImages >= 5 || isUploading}
                           >
-                            Chọn ảnh
+                            {isUploading ? (
+                              <>
+                                <Spinner animation="border" size="sm" className="me-2" />
+                                Đang upload...
+                              </>
+                            ) : (
+                              "Chọn ảnh"
+                            )}
                           </Button>
                           <p className="upload-note">Chấp nhận JPG, PNG, WEBP. Tối đa 5MB mỗi ảnh.</p>
                         </div>
                       </div>
 
                       {/* Image Preview */}
-                      {images.length > 0 && (
+                      {(images.length > 0 || localImages.length > 0) && (
                         <div className="image-preview mt-3">
                           <Row>
+                            {/* Uploaded Images */}
                             {images.map((img, index) => (
-                              <Col md={4} key={index} className="mb-3">
+                              <Col md={4} key={`uploaded-${index}`} className="mb-3">
                                 <div className="preview-container">
                                   <img
-                                    src={img || "/placeholder.svg"}
+                                    src={img.url || "/placeholder.svg"}
+                                    alt={`Uploaded ${index + 1}`}
+                                    className="preview-image"
+                                  />
+                                  <Button
+                                    variant="danger"
+                                    size="sm"
+                                    className="remove-button"
+                                    onClick={() => removeUploadedImage(index)}
+                                    title="Xóa ảnh đã upload"
+                                  >
+                                    <X size={16} />
+                                  </Button>
+                                  <div className="image-info">
+                                    <small>Đã upload</small>
+                                    <br />
+                                    <small className="text-success">✓ Lưu trên cloud</small>
+                                  </div>
+                                </div>
+                              </Col>
+                            ))}
+                            
+                            {/* Local Preview Images */}
+                            {localImages.map((imgObj, index) => (
+                              <Col md={4} key={`local-${index}`} className="mb-3">
+                                <div className="preview-container">
+                                  <img
+                                    src={imgObj.preview}
                                     alt={`Preview ${index + 1}`}
                                     className="preview-image"
                                   />
@@ -319,15 +479,15 @@ export default function BookingPropertyDescription() {
                                     variant="danger"
                                     size="sm"
                                     className="remove-button"
-                                    onClick={() => removeImage(index)}
-                                    title="Xóa ảnh"
+                                    onClick={() => removeLocalImage(index)}
+                                    title="Xóa ảnh chưa upload"
                                   >
                                     <X size={16} />
                                   </Button>
                                   <div className="image-info">
-                                    <small>{img.name}</small>
+                                    <small>{imgObj.name}</small>
                                     <br />
-                                    <small className="text-muted">{(img.size / 1024 / 1024).toFixed(2)} MB</small>
+                                    <small className="text-warning">Chưa upload</small>
                                   </div>
                                 </div>
                               </Col>
@@ -351,7 +511,10 @@ export default function BookingPropertyDescription() {
                         <strong>Mô tả:</strong> {description.length} ký tự
                       </p>
                       <p className="mb-0">
-                        <strong>Hình ảnh:</strong> {images.length}/5 ảnh
+                        <strong>Hình ảnh:</strong> {totalImages}/5 ảnh 
+                        {localImages.length > 0 && (
+                          <span className="text-warning ms-2">({localImages.length} ảnh chưa upload)</span>
+                        )}
                       </p>
                     </div>
                   </Alert>
@@ -360,11 +523,29 @@ export default function BookingPropertyDescription() {
             </div>
 
             <div className="navigation-buttons mt-4">
-              <Button variant="outline-primary" className="back-button" onClick={handleBack} title="Quay lại">
+              <Button 
+                variant="outline-primary" 
+                className="back-button" 
+                onClick={handleBack} 
+                title="Quay lại"
+                disabled={isUploading}
+              >
                 <ArrowLeft size={20} />
               </Button>
-              <Button variant="primary" className="continue-button" onClick={handleContinue} disabled={!isFormValid}>
-                Tiếp tục
+              <Button 
+                variant="primary" 
+                className="continue-button" 
+                onClick={handleContinue} 
+                disabled={!isFormValid || isUploading}
+              >
+                {isUploading ? (
+                  <>
+                    <Spinner animation="border" size="sm" className="me-2" />
+                    Đang xử lý...
+                  </>
+                ) : (
+                  "Tiếp tục"
+                )}
               </Button>
             </div>
           </Col>
@@ -401,12 +582,12 @@ export default function BookingPropertyDescription() {
                       </span>
                     </div>
                     <div className="info-content">
-                      <h5 className="info-title">Mẹo viết mô tả hấp dẫn</h5>
+                      <h5 className="info-title">Mẹo upload ảnh hiệu quả</h5>
                       <ul className="info-list mt-3">
-                        <li>Mô tả vị trí và tiện ích nổi bật</li>
-                        <li>Nhấn mạnh điểm độc đáo của khách sạn</li>
-                        <li>Sử dụng ngôn ngữ tích cực, thân thiện</li>
-                        <li>Upload ảnh chất lượng cao, đa dạng góc độ</li>
+                        <li>Ảnh có thể preview trước khi upload</li>
+                        <li>Ảnh màu xanh đã lưu trên cloud an toàn</li>
+                        <li>Ảnh màu vàng chưa upload, cần tiếp tục để lưu</li>
+                        <li>Có thể xóa ảnh bất kỳ lúc nào</li>
                       </ul>
                     </div>
                   </div>
@@ -417,6 +598,7 @@ export default function BookingPropertyDescription() {
         </Row>
       </Container>
 
+      {/* Existing styles remain the same */}
       <style jsx>{`
         .booking-app {
           min-height: 100vh;

@@ -1,3 +1,4 @@
+import { Hotel } from "lucide-react";
 import HotelActions from "./actions";
 
 const initialState = {
@@ -24,13 +25,8 @@ const initialState = {
     email: "",
     star: 1,
     description: "",
-    images: [
-      "https://i.pinimg.com/736x/fa/02/06/fa0206cb4a813d05f5b56dc1c4681a8b.jpg",
-      "https://i.pinimg.com/736x/0e/97/13/0e971336348fabb5a30df2ca76b512dd.jpg",
-      "https://i.pinimg.com/736x/ad/54/bf/ad54bf18bebd9d71103b68cee09fe6fb.jpg",
-      "https://i.pinimg.com/736x/f3/3f/eb/f33feb864f7f72b753b48c8a9003d405.jpg",
-      "https://i.pinimg.com/736x/1c/31/7c/1c317c4053b0835a3a54944ace8b66f0.jpg",
-    ],
+    images: [],
+    businessDocuments: [],
     phoneNumber: "",
     email: "",
   },
@@ -173,7 +169,7 @@ const favoriteHotelReducer = (state = initialState, action) => {
           checkCreateHotel: action.payload.checkCreateHotel,
         },
       };
-    case HotelActions.CREATE_HOTEL: {
+    case HotelActions.CREATE_HOTEL_SUCCESS: {
       return {
         ...state,
         loading: true,
@@ -181,6 +177,21 @@ const favoriteHotelReducer = (state = initialState, action) => {
         hotel: action.payload.hotel,
       };
     }
+    case HotelActions.CLEAR_HOTEL_CREATE:
+      return {
+        ...state,
+        createHotel: {
+          ...initialState.createHotel,
+        },
+      };
+    case HotelActions.SAVE_HOTEL_DOCUMENTS_CREATE:
+      return {
+        ...state,
+        createHotel: {
+          ...state.createHotel,
+          businessDocuments: action.payload.businessDocuments,
+        },
+      };
     default:
       return state;
   }

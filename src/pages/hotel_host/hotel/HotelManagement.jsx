@@ -199,7 +199,7 @@ function HotelManagement() {
               <div className="main-image-container mb-3">
                 <Image
                   src={
-                    hotelinfo[0].images?.[selectedImage] || "/placeholder.svg"
+                    hotelinfo[0].images?.[selectedImage].url || "/placeholder.svg"
                   }
                   alt="Ảnh khách sạn chính"
                   fluid
@@ -214,10 +214,12 @@ function HotelManagement() {
               </div>
 
               <div style={styles.imageThumbnails}>
-                {hotelinfo[0].images?.map((image, index) => (
+                {hotelinfo[0].images?.map((image, index) => {
+                  console.log("image: ", image);
+                  return (
                   <img
                     key={index}
-                    src={image}
+                    src={image.url}
                     alt={`Ảnh ${index + 1}`}
                     onClick={() => setSelectedImage(index)}
                     style={{
@@ -233,7 +235,8 @@ function HotelManagement() {
                       (e.currentTarget.style.transform = "scale(1)")
                     }
                   />
-                ))}
+                )
+                })}
               </div>
             </Col>
 
@@ -296,7 +299,7 @@ function HotelManagement() {
                 </h2>
                 <Row>
                   {hotelinfo[0].facilities?.map((facility, index) => (
-                    <Col key={index} xs={6} md={4} lg={3} className="mb-3">
+                    <Col key={index} xs={6} md={4} lg={411111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111} className="mb-3">
                       <div className="amenity-item d-flex align-items-center gap-2">
                         {renderIcon(facility.icon)}
                         <span style={{ marginLeft: "5px" }}>

@@ -730,7 +730,7 @@ function Hotel({ show, handleClose, selectedHotelId }) {
                         {hotelImages.map((imgUrl, idx) => (
                           <img
                             key={idx}
-                            src={imgUrl || "/placeholder.svg"}
+                            src={imgUrl.url || "/placeholder.svg"}
                             alt={`Hotel image ${idx + 1}`}
                             style={{
                               width: 100,

@@ -32,18 +32,37 @@ const Factories = {
     return api.put(`${ApiConstants.UPDATE_HOTEL}/${hotelId}`, updateData);
   },
   updateHotelServiceStatus: (hotelId, statusActive, serviceId) => {
-    const url = ApiConstants.UPDATE_HOTEL_SERVICE_STATUS.replace(":hotelId", hotelId);
-    return api.put(url, {statusActive: statusActive.statusActive, serviceId} );
+    const url = ApiConstants.UPDATE_HOTEL_SERVICE_STATUS.replace(
+      ":hotelId",
+      hotelId
+    );
+    return api.put(url, { statusActive: statusActive.statusActive, serviceId });
   },
   createHotelService: (serviceData) => {
     return api.post(ApiConstants.CREATE_HOTEL_SERVICE, serviceData);
   },
   changeStatusHotel: (hotelId, ownerStatus) => {
-    return api.put(`${ApiConstants.CHANGE_STATUS_HOTEL}/${hotelId}`, {ownerStatus});
+    return api.put(`${ApiConstants.CHANGE_STATUS_HOTEL}/${hotelId}`, {
+      ownerStatus,
+    });
   },
 
   createHotel: (createHotel) => {
     return api.post(ApiConstants.CREATE_HOTEL, createHotel);
+  },
+  // Hotel Image APIs
+  uploadHotelImages: (formData) => {
+    return api.post(ApiConstants.UPLOAD_HOTEL_IMAGE, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+  },
+
+  deleteHotelImages: (imageIds) => {
+    return api.delete(ApiConstants.DELETE_HOTEL_IMAGE, {
+      data: { imageIds },
+    });
   },
 };
 

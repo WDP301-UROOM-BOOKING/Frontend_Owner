@@ -24,11 +24,6 @@ const WaitPendingPage = () => {
           </div>
           
           <div className="detail-item1">
-            <span className="detail-label1">Submission date: </span>
-            <span className="detail-value1">12:03:01 20/10/2025</span>
-          </div>
-          
-          <div className="detail-item1">
             <span className="detail-label1">Estimated time: </span>
             <span className="detail-value1">24-48 hours</span>
           </div>

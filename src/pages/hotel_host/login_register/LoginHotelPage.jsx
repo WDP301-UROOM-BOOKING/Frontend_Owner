@@ -67,6 +67,7 @@ const LoginHotelPage = () => {
           data: { email: formData.email, password: formData.password },
           onSuccess: (user) => {
             setIsLoading(false);
+            console.log("Login successful:", user);
             if (user.isLocked) {
               navigate(Routers.BannedPage, {
                 state: {
@@ -76,8 +77,11 @@ const LoginHotelPage = () => {
               });
               dispatch({ type: AuthActions.LOGOUT });
               clearToken();
-            } else if(user.ownedHotels.length === 0){
+            } else if(user.ownedHotels.length === 0 ){
+              console.log("User has no owned hotels, redirecting to registration page");
               navigate(Routers.BookingRegistration);
+            } else if(user.ownedHotels.length !== 0 &&  user.ownedHotels[0].adminStatus === "PENDING"){
+              navigate(Routers.WaitPendingPage);
             }else{
               navigate(Routers.DataAnalysisAI);
             }

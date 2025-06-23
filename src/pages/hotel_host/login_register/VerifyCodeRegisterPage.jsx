@@ -92,7 +92,7 @@ const VerifyCodeRegisterPage = () => {
         data: { code },
         onSuccess: (data) => {
           setIsLoading(false);
-          navigate(Routers.BookingRegistration, { 
+          navigate(Routers.LoginHotelPage, { 
             state: { message: "Your account has been verified. You can now log in." }
           });
         },

@@ -30,6 +30,10 @@ const ApiConstants = {
   //chat
   FETCH_CHAT_MESSAGE: "/chat/chat-history/:receiverId",
   FETCH_CHAT_ALL_USERS: "/chat/chat-users",
+
+  //Image_Hotel:
+  UPLOAD_HOTEL_IMAGE: "/hotel/upload_images",
+  DELETE_HOTEL_IMAGE: "/hotel/delete_images",
 };
 
 export default ApiConstants;
