@@ -148,7 +148,7 @@ function App() {
                 }}
               >
                 <i className="bi bi-door-closed nav-icon"></i>
-                <span>Quản lý phòng</span>
+                <span>Quản lý loại phòng</span>
               </a>
             </li>
             <li className="nav-item">

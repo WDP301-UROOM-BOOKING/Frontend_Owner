@@ -14,11 +14,7 @@ export const ratingLabelMap = {
   5: "Rất Tốt",
 };
 
-/**
- * Get label for a given rating value
- * @param {number} value - rating value (1-5)
- * @returns {string} - label
- */
+
 export default function handleRating(value) {
   return ratingLabelMap[Math.floor(value)] || "Không xác định";
 }

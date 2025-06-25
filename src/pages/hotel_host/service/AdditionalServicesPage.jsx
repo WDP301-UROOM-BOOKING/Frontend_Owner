@@ -17,7 +17,8 @@ function AdditionalServicesPage() {
   const Auth = useAppSelector((state) => state.Auth.Auth)
   const [showModal, setShowModal] = useState(false)
   const [hotelinfo, setHotelinfo] = useState([])
-  const [listService, setListService] = useState([]) // State mới cho danh sách services
+  const [listService, setListService] = useState([]) // State mới cho danh sách servicesư
+  console.log("listService:", listService)
   const [showModalChangeStatus, setShowModalChangeStatus] = useState(false)
   const [selectedService, setSelectedService] = useState(null)
   const [currentService, setCurrentService] = useState({
@@ -123,7 +124,8 @@ function AdditionalServicesPage() {
     }
 
     const onSuccess = (data) => {
-      showToast.success("Cập nhật service thành công !!!")
+      console.log("Cập nhật service thành công:", data)
+      showToast.success("Cập nhật dịch vụ thành công !!!")
       setIsSubmitting(false)
 
       if (isEditing) {
@@ -135,8 +137,8 @@ function AdditionalServicesPage() {
         // Thêm service mới vào listService
         const newService = {
           ...payload,
-          _id: data.service?._id || Date.now().toString(), // Sử dụng ID từ response hoặc tạm thời
-          statusActive: "ACTIVE",
+          _id: data._id,
+          statusActive: "NONACTIVE", // Mặc định trạng thái là không hoạt động
         }
         setListService((prevList) => [...prevList, newService])
       }
@@ -161,9 +163,7 @@ function AdditionalServicesPage() {
         payload: {
           serviceId: currentService._id,
           updateData: payload,
-          onSuccess,
-          onFailed,
-          onError,
+          onSuccess
         },
       })
     } else {

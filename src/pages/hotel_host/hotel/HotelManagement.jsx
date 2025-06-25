@@ -299,7 +299,7 @@ function HotelManagement() {
                 </h2>
                 <Row>
                   {hotelinfo[0].facilities?.map((facility, index) => (
-                    <Col key={index} xs={6} md={4} lg={411111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111} className="mb-3">
+                    <Col key={index} xs={6} md={4} lg={4} className="mb-3">
                       <div className="amenity-item d-flex align-items-center gap-2">
                         {renderIcon(facility.icon)}
                         <span style={{ marginLeft: "5px" }}>

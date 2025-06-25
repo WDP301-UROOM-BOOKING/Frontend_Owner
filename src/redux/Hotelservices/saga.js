@@ -22,8 +22,6 @@ function* updateHotelService() {
           type: HotelServiceActions.UPDATE_HOTEL_SERVICE_SUCCESS,
           payload: response.data,
         });
-      } else {
-        onFailed?.(response?.data?.message || "Cập nhật dịch vụ thất bại");
       }
     } catch (error) {
       const status = error.response?.status;

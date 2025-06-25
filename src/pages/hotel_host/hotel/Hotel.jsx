@@ -8,6 +8,8 @@ import {
   Card,
   InputGroup,
   Modal,
+  Alert,
+  Spinner,
 } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import {
@@ -21,6 +23,9 @@ import { useDispatch } from "react-redux";
 import HotelActions from "../../../redux/hotel/actions";
 import { showToast } from "@components/ToastContainer";
 import ConfirmationModal from "@components/ConfirmationModal";
+import Factories from "@redux/hotel/factories"; // Import factories
+import { Upload, X } from "lucide-react"; // Import icons
+
 function Hotel({ show, handleClose, selectedHotelId }) {
   const [bedCount, setBedCount] = useState({
     singleBed: 1,
@@ -225,7 +230,7 @@ function Hotel({ show, handleClose, selectedHotelId }) {
   console.log("szzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz", hotelinfo?.[0]?._id);
 
   /// UPDATE_HOTEL
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!hotelinfo?.[0]?._id) {
       showToast.error("Không tìm thấy ID khách sạn để cập nhật.");
       return;
@@ -245,55 +250,82 @@ function Hotel({ show, handleClose, selectedHotelId }) {
       return;
     }
 
+    // Check minimum images requirement
+    const totalImages = hotelImages.length + previewImages.length;
+    if (totalImages < 5) {
+      showToast.error("Khách sạn phải có ít nhất 5 ảnh!");
+      return;
+    }
+
     const fullAddress = `${address}, ${wardLabel}, ${districtLabel}, Thành phố ${cityLabel}`;
 
-    console.log("hotelFacilities:", hotelFacilities);
+    try {
+      let uploadedImages = [];
+      
+      // Upload new images if any
+      if (previewImages.length > 0) {
+        uploadedImages = await uploadImages();
+        if (uploadedImages.length === 0 && previewImages.length > 0) {
+          return; // Upload failed
+        }
+      }
 
-    const updateData = {
-      hotelName: hotelinfo?.[0]?.hotelName,
-      description: hotelinfo?.[0]?.description || "",
-      address: fullAddress,
-      phoneNumber: hotelinfo?.[0]?.phoneNumber || "0934726073",
-      services: hotelinfo?.[0]?.services || [],
-      facilities: hotelFacilities, // GỬI array name STRING
-      rating: hotelinfo?.[0]?.rating || 0,
-      star: hotelinfo?.[0]?.star || 0,
-      pricePerNight: hotelinfo?.[0]?.pricePerNight || 0,
-      images: hotelinfo?.[0]?.images || [],
-      businessDocuments: hotelinfo?.[0]?.businessDocuments || [],
-      adminStatus: hotelinfo?.[0]?.adminStatus || "",
-      ownerStatus: hotelinfo?.[0]?.ownerStatus || "",
-      checkInStart,
-      checkInEnd,
-      checkOutStart,
-      checkOutEnd,
-      email: hotelinfo?.[0]?.email || "",
-    };
+      // Combine existing and new images
+      const allImages = [...hotelImages, ...uploadedImages];
+      
+      // Clear local images after successful upload
+      setPreviewImages([]);
 
-    setLoading(true);
+      const updateData = {
+        hotelName: hotelinfo?.[0]?.hotelName,
+        description: hotelinfo?.[0]?.description || "",
+        address: fullAddress,
+        phoneNumber: hotelinfo?.[0]?.phoneNumber || "0934726073",
+        services: hotelinfo?.[0]?.services || [],
+        facilities: hotelFacilities,
+        rating: hotelinfo?.[0]?.rating || 0,
+        star: hotelinfo?.[0]?.star || 0,
+        pricePerNight: hotelinfo?.[0]?.pricePerNight || 0,
+        images: allImages, // Use combined images
+        businessDocuments: hotelinfo?.[0]?.businessDocuments || [],
+        adminStatus: hotelinfo?.[0]?.adminStatus || "",
+        ownerStatus: hotelinfo?.[0]?.ownerStatus || "",
+        checkInStart,
+        checkInEnd,
+        checkOutStart,
+        checkOutEnd,
+        email: hotelinfo?.[0]?.email || "",
+      };
 
-    dispatch({
-      type: HotelActions.UPDATE_HOTEL,
-      payload: {
-        hotelId: hotelinfo?.[0]?._id,
-        updateData,
-        onSuccess: (data) => {
-          showToast.success("Cập nhật khách sạn thành công!");
-          setLoading(false);
-          window.location.reload();
-          handleClose();
+      setLoading(true);
+
+      dispatch({
+        type: HotelActions.UPDATE_HOTEL,
+        payload: {
+          hotelId: hotelinfo?.[0]?._id,
+          updateData,
+          onSuccess: (data) => {
+            showToast.success("Cập nhật khách sạn thành công!");
+            setLoading(false);
+            window.location.reload();
+            handleClose();
+          },
+          onFailed: (message) => {
+            showToast.error(message || "Cập nhật khách sạn thất bại!");
+            setLoading(false);
+          },
+          onError: (err) => {
+            console.error(err);
+            showToast.error("Lỗi máy chủ trong khi cập nhật khách sạn.");
+            setLoading(false);
+          },
         },
-        onFailed: (message) => {
-          showToast.error(message || "Cập nhật khách sạn thất bại!");
-          setLoading(false);
-        },
-        onError: (err) => {
-          console.error(err);
-          showToast.error("Lỗi máy chủ trong khi cập nhật khách sạn.");
-          setLoading(false);
-        },
-      },
-    });
+      });
+    } catch (error) {
+      console.error('Error in handleSave:', error);
+      showToast.error("Có lỗi xảy ra: " + error.message);
+      setLoading(false);
+    }
   };
 
   const [hotelImages, setHotelImages] = useState([]);
@@ -302,15 +334,145 @@ function Hotel({ show, handleClose, selectedHotelId }) {
       setHotelImages(hotelinfo[0].images); // hotelinfo[0].images = [url1, url2, ...]
     }
   }, [hotelinfo]);
-  const handleFileChange = (e) => {
-    const files = Array.from(e.target.files);
-    // Nếu muốn preview file mới chọn
-    const filePreviews = files.map((file) => URL.createObjectURL(file));
-    setHotelImages(filePreviews);
+  const [isUploadingImages, setIsUploadingImages] = useState(false);
+  const [previewImages, setPreviewImages] = useState([]); // For local file preview
+  const [uploadProgress, setUploadProgress] = useState(0);
 
-    // TODO: xử lý upload file lên server hoặc lưu file tạm
+  const handleFileChange = async (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+
+    // Validate file types
+    const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+    const invalidFiles = files.filter((file) => !validTypes.includes(file.type));
+
+    if (invalidFiles.length > 0) {
+      showToast.error("Chỉ chấp nhận file ảnh định dạng JPG, PNG, WEBP");
+      return;
+    }
+
+    // Validate file sizes (max 5MB each)
+    const oversizedFiles = files.filter((file) => file.size > 5 * 1024 * 1024);
+    if (oversizedFiles.length > 0) {
+      showToast.error("Kích thước file không được vượt quá 5MB");
+      return;
+    }
+
+    // Remove max image limit - allow unlimited images
+    // Create preview objects for local files
+    const filesWithPreview = files.map(file => ({
+      file: file,
+      preview: URL.createObjectURL(file),
+      name: file.name,
+      size: file.size,
+      isLocal: true
+    }));
+
+    setPreviewImages(prev => [...prev, ...filesWithPreview]);
   };
-  console.log("6666666666666666666666666666666:", selectedDistrict);
+
+  const removePreviewImage = (index) => {
+    const imageToRemove = previewImages[index];
+    const totalImages = hotelImages.length + previewImages.length;
+    
+    if (totalImages <= 5) {
+      showToast.error("Khách sạn phải có ít nhất 5 ảnh!");
+      return;
+    }
+
+    if (imageToRemove && imageToRemove.preview) {
+      URL.revokeObjectURL(imageToRemove.preview);
+    }
+    setPreviewImages(previewImages.filter((_, i) => i !== index));
+  };
+
+  const removeUploadedImage = async (index) => {
+    const imageToRemove = hotelImages[index];
+    const totalImages = hotelImages.length + previewImages.length;
+    
+    if (totalImages <= 5) {
+      showToast.error("Khách sạn phải có ít nhất 5 ảnh!");
+      return;
+    }
+    
+    try {
+      // Call API to delete from Cloudinary
+      const response = await Factories.deleteHotelImages([imageToRemove.public_ID]);
+      
+      if (response.data && !response.data.error) {
+        // Remove from local state
+        setHotelImages(hotelImages.filter((_, i) => i !== index));
+        showToast.success("Đã xóa ảnh thành công!");
+      } else {
+        throw new Error(response.data?.message || "Không thể xóa ảnh");
+      }
+    } catch (error) {
+      console.error('Error deleting image:', error);
+      showToast.error("Có lỗi xảy ra khi xóa ảnh: " + error.message);
+    }
+  };
+
+  const uploadImages = async () => {
+    if (previewImages.length === 0) return [];
+
+    try {
+      setIsUploadingImages(true);
+      setUploadProgress(0);
+      
+      const formData = new FormData();
+      previewImages.forEach((imgObj) => {
+        formData.append('images', imgObj.file);
+      });
+
+      // Simulate upload progress
+      const progressInterval = setInterval(() => {
+        setUploadProgress((prev) => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return 90;
+          }
+          return prev + 10;
+        });
+      }, 200);
+
+      const response = await Factories.uploadHotelImages(formData);
+      
+      if (response.data && !response.data.error) {
+        // Cleanup local previews
+        previewImages.forEach(img => {
+          if (img.preview) {
+            URL.revokeObjectURL(img.preview);
+          }
+        });
+
+        setUploadProgress(100);
+        showToast.success("Upload ảnh thành công!");
+        return response.data.data.images;
+      } else {
+        throw new Error(response.data?.message || "Upload failed");
+      }
+    } catch (error) {
+      console.error('Error uploading images:', error);
+      showToast.error("Có lỗi xảy ra khi upload ảnh: " + error.message);
+      return [];
+    } finally {
+      setIsUploadingImages(false);
+      setUploadProgress(0);
+    }
+  };
+
+  // Cleanup URLs when component unmounts
+  useEffect(() => {
+    return () => {
+      previewImages.forEach(img => {
+        if (img.preview) {
+          URL.revokeObjectURL(img.preview);
+        }
+      });
+    };
+  }, [previewImages]);
+
+  const totalImages = hotelImages.length + previewImages.length;
 
   return (
     <Modal show={show} onHide={handleClose} size="lg">
@@ -327,7 +489,7 @@ function Hotel({ show, handleClose, selectedHotelId }) {
         />
         <Container className="py-4">
           <h2 className="mb-4 fw-bold">Chi tiết phòng</h2>
-          {/* <h1>{selectedHotelId}</h1> */}
+
           {/* Room Type Section */}
           <Card className="mb-4 shadow-sm">
             <Card.Body>
@@ -715,38 +877,230 @@ function Hotel({ show, handleClose, selectedHotelId }) {
                       />
                     </Col>
                   </Row>
-                  <Row className="mb-3">
-                    <Col md={12}>
-                      <Form.Label className="fw-bold" style={{ fontSize: 18 }}>
-                        Hình ảnh khách sạn (Bắt buộc 5 ảnh)
-                      </Form.Label>
-                      <Form.Control
-                        type="file"
-                        multiple
-                        accept="image/*"
-                        onChange={handleFileChange}
-                      />
-                      <div className="mt-3 d-flex flex-wrap gap-2">
-                        {hotelImages.map((imgUrl, idx) => (
-                          <img
-                            key={idx}
-                            src={imgUrl.url || "/placeholder.svg"}
-                            alt={`Hotel image ${idx + 1}`}
-                            style={{
-                              width: 100,
-                              height: 100,
-                              objectFit: "cover",
-                              borderRadius: 5,
-                            }}
-                          />
-                        ))}
-                      </div>
-                    </Col>
-                  </Row>
                 </div>
               </Row>
             </Card.Body>
           </Card>
+          {/* Images Section - Updated */}
+          <Card className="mb-4 shadow-sm">
+            <Card.Body>
+              <Row className="mb-3">
+                <Col md={12}>
+                  <Form.Label className="fw-bold" style={{ fontSize: 18 }}>
+                    Hình ảnh khách sạn <span className="text-danger">*</span>
+                    <span className="text-muted ms-2">({totalImages} ảnh)</span>
+                  </Form.Label>
+
+                  {/* Loading indicator */}
+                  {isUploadingImages && (
+                    <Alert variant="info" className="mb-3">
+                      <div className="d-flex align-items-center mb-2">
+                        <Spinner animation="border" size="sm" className="me-2" />
+                        <span>Đang upload ảnh... {uploadProgress}%</span>
+                      </div>
+                      <div className="progress" style={{ height: "8px" }}>
+                        <div
+                          className="progress-bar"
+                          role="progressbar"
+                          style={{ width: `${uploadProgress}%` }}
+                          aria-valuenow={uploadProgress}
+                          aria-valuemin="0"
+                          aria-valuemax="100"
+                        ></div>
+                      </div>
+                    </Alert>
+                  )}
+
+                  <Form.Control
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    disabled={isUploadingImages}
+                  />
+                  <Form.Text className="text-muted">
+                    Chấp nhận JPG, PNG, WEBP. Tối đa 5MB mỗi ảnh. <strong>Tối thiểu 5 ảnh, không giới hạn tối đa.</strong>
+                  </Form.Text>
+
+                  {/* Show current image count */}
+                  <div className="mt-2">
+                    <small className="text-muted">
+                      Tổng số ảnh: <strong>{totalImages}</strong> 
+                      {totalImages < 5 && (
+                        <span className="text-danger ms-2">
+                          (Cần thêm {5 - totalImages} ảnh)
+                        </span>
+                      )}
+                      {totalImages >= 5 && (
+                        <span className="text-success ms-2">✓ Đủ số lượng ảnh</span>
+                      )}
+                    </small>
+                  </div>
+
+                  {/* Show preview images (newly selected images) */}
+                  {previewImages.length > 0 && (
+                    <div className="mt-3">
+                      <small className="text-muted d-block mb-2">
+                        <strong>Ảnh mới chọn ({previewImages.length}):</strong>
+                      </small>
+                      <Row className="mt-2">
+                        {previewImages.map((imgObj, index) => (
+                          <Col md={3} key={`preview-${index}`} className="mb-3">
+                            <div style={{ position: "relative" }}>
+                              <img
+                                src={imgObj.preview}
+                                alt={`Preview ${index + 1}`}
+                                style={{
+                                  width: "100%",
+                                  height: "150px",
+                                  objectFit: "cover",
+                                  borderRadius: "8px",
+                                  border: "2px solid #007bff",
+                                }}
+                              />
+                              <Button
+                                variant="danger"
+                                size="sm"
+                                style={{
+                                  position: "absolute",
+                                  top: "8px",
+                                  right: "8px",
+                                  padding: "4px 8px",
+                                  borderRadius: "50%",
+                                  width: "30px",
+                                  height: "30px",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  fontSize: "16px",
+                                  fontWeight: "bold",
+                                }}
+                                onClick={() => removePreviewImage(index)}
+                                disabled={isUploadingImages || totalImages <= 5}
+                                title={totalImages <= 5 ? "Không thể xóa - cần tối thiểu 5 ảnh" : "Xóa ảnh"}
+                              >
+                                ×
+                              </Button>
+                              <div className="mt-2">
+                                <small className="text-muted d-block" style={{ fontSize: "13px" }}>
+                                  {imgObj.name.length > 20 ? `${imgObj.name.substring(0, 20)}...` : imgObj.name}
+                                </small>
+                                <small className="text-warning d-block" style={{ fontSize: "12px" }}>
+                                  Chưa upload ({(imgObj.size / 1024 / 1024).toFixed(1)}MB)
+                                </small>
+                              </div>
+                            </div>
+                          </Col>
+                        ))}
+                      </Row>
+                    </div>
+                  )}
+
+                  {/* Show existing images */}
+                  {hotelImages.length > 0 && (
+                    <div className="mt-3">
+                      <small className="text-muted d-block mb-2">
+                        <strong>Ảnh hiện tại ({hotelImages.length}):</strong>
+                      </small>
+                      <Row className="mt-2">
+                        {hotelImages.map((img, index) => (
+                          <Col md={3} key={`existing-${index}`} className="mb-3">
+                            <div style={{ position: "relative" }}>
+                              <img
+                                src={img.url || "/placeholder.svg"}
+                                alt={`Hotel image ${index + 1}`}
+                                style={{
+                                  width: "100%",
+                                  height: "150px",
+                                  objectFit: "cover",
+                                  borderRadius: "8px",
+                                  border: "1px solid #dee2e6",
+                                }}
+                              />
+                              <Button
+                                variant="danger"
+                                size="sm"
+                                style={{
+                                  position: "absolute",
+                                  top: "8px",
+                                  right: "8px",
+                                  padding: "4px 8px",
+                                  borderRadius: "50%",
+                                  width: "30px",
+                                  height: "30px",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  fontSize: "16px",
+                                  fontWeight: "bold",
+                                }}
+                                onClick={() => removeUploadedImage(index)}
+                                disabled={isUploadingImages || totalImages <= 5}
+                                title={totalImages <= 5 ? "Không thể xóa - cần tối thiểu 5 ảnh" : "Xóa ảnh"}
+                              >
+                                ×
+                              </Button>
+                              <div className="mt-2">
+                                <small className="text-success d-block" style={{ fontSize: "11px" }}>
+                                  ✓ Đã lưu trên cloud
+                                </small>
+                              </div>
+                            </div>
+                          </Col>
+                        ))}
+                      </Row>
+                    </div>
+                  )}
+
+                  {/* Error message for images */}
+                  {totalImages < 5 && (
+                    <div className="text-danger mt-2 small">
+                      <strong>Khách sạn phải có ít nhất 5 ảnh</strong>
+                    </div>
+                  )}
+
+                  {/* Add bulk actions for multiple selection */}
+                  {(previewImages.length > 0 || hotelImages.length > 0) && (
+                    <div className="mt-3 p-3 bg-light rounded">
+                      <div className="d-flex justify-content-between align-items-center">
+                        <div>
+                          <small className="text-muted">
+                            <strong>Thao tác nhanh:</strong>
+                          </small>
+                        </div>
+                        <div className="d-flex gap-2">
+                          {previewImages.length > 0 && (
+                            <Button
+                              variant="outline-danger"
+                              size="sm"
+                              onClick={() => {
+                                if (totalImages - previewImages.length >= 5) {
+                                  // Cleanup preview URLs
+                                  previewImages.forEach(img => {
+                                    if (img.preview) {
+                                      URL.revokeObjectURL(img.preview);
+                                    }
+                                  });
+                                  setPreviewImages([]);
+                                  showToast.success("Đã xóa tất cả ảnh chưa upload!");
+                                } else {
+                                  showToast.error("Không thể xóa - cần giữ lại tối thiểu 5 ảnh!");
+                                }
+                              }}
+                              disabled={isUploadingImages || (totalImages - previewImages.length < 5)}
+                            >
+                              Xóa tất cả ảnh mới
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </Col>
+              </Row>
+            </Card.Body>
+          </Card>
+
           {/* Action Buttons */}
           <Row className="mt-4">
             <Col xs={6}>
@@ -754,6 +1108,7 @@ function Hotel({ show, handleClose, selectedHotelId }) {
                 variant="outline-danger"
                 className="w-100 py-2"
                 onClick={handleClose}
+                disabled={isUploadingImages}
               >
                 Hủy bỏ
               </Button>
@@ -765,8 +1120,16 @@ function Hotel({ show, handleClose, selectedHotelId }) {
                 onClick={() => {
                   setShowModal(true);
                 }}
+                disabled={isUploadingImages || totalImages < 5}
               >
-                Chỉnh sửa
+                {isUploadingImages ? (
+                  <>
+                    <Spinner animation="border" size="sm" className="me-2" />
+                    Đang xử lý...
+                  </>
+                ) : (
+                  "Chỉnh sửa"
+                )}
               </Button>
             </Col>
           </Row>

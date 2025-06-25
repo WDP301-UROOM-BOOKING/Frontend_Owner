@@ -34,6 +34,10 @@ const ApiConstants = {
   //Image_Hotel:
   UPLOAD_HOTEL_IMAGE: "/hotel/upload_images",
   DELETE_HOTEL_IMAGE: "/hotel/delete_images",
+
+
+  //Room:
+  ROOMS_BY_HOTEL_ID: (hotelId) => `/room/list_room/${hotelId}`,
 };
 
 export default ApiConstants;

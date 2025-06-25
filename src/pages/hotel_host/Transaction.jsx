@@ -221,7 +221,7 @@ const Transaction = () => {
   };
 
   const totalCustomerPaid = reservations?.reduce(
-    (sum, r) => sum + calculateTotalPrice(r.rooms),
+    (sum, r) => sum + r.totalPrice,
     0
   );
 
@@ -407,22 +407,25 @@ const Transaction = () => {
                       <span>
                         {reservation.rooms &&
                           reservation.rooms.length > 0 &&
-                          reservation.rooms.map((roomObj, idx) => (
+                          reservation.rooms.map((roomObj, idx) => {
+                            console.log("ABC: ", roomObj);
+                            return (
                             <div key={idx}>
-                              {roomObj.room?.name} - {roomObj.room?.quantity}{" "}
+                              {roomObj.room?.name} - {roomObj.quantity}{" "}
                               rooms
                             </div>
-                          ))}
+                          )
+                          })}
                       </span>
                     </td>
                     <td>
-                      {Utils.formatCurrency(calculateTotalPrice(reservation.rooms))}
+                      {Utils.formatCurrency(reservation.totalPrice || 0)}
                     </td>
                     <td className="text-danger">
-                      {Utils.formatCurrency(calculateTotalPrice(reservation.rooms) * 0.12 || 0)}
+                      {(Utils.formatCurrency(Math.floor(reservation.totalPrice * 0.12 || 0)))}
                     </td>
                     <td className="text-success">
-                      {Utils.formatCurrency(calculateTotalPrice(reservation.rooms) * 0.88 || 0)}
+                      {(Utils.formatCurrency(Math.floor(reservation.totalPrice * 0.88 || 0)))}
                     </td>
                     <td>
                       <span
@@ -487,119 +490,7 @@ const Transaction = () => {
         </Card.Body>
       </Card>
 
-      {/* Phần thông tin tài khoản ngân hàng
-      <Card className="mb-4">
-        <Card.Header as="h5">Thông tin tài khoản ngân hàng</Card.Header>
-        <Card.Body>
-          {!hasBankInfo && (
-            <Alert variant="warning">
-              Vui lòng thêm thông tin tài khoản ngân hàng của bạn để nhận thanh
-              toán.
-            </Alert>
-          )}
-
-          {showForm ? (
-            <Form onSubmit={handleSubmit}>
-              <Row className="align-items-end">
-                <Col md={3}>
-                  <Form.Group className="mb-0">
-                    <Form.Label>Số tài khoản</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="accountNumber"
-                      value={bankInfo.accountNumber}
-                      onChange={handleBankInfoChange}
-                      placeholder="Nhập số tài khoản của bạn"
-                      required
-                    />
-                  </Form.Group>
-                </Col>
-                <Col md={3}>
-                  <Form.Group className="mb-0">
-                    <Form.Label>Tên tài khoản</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="accountName"
-                      value={bankInfo.accountName}
-                      onChange={handleBankInfoChange}
-                      placeholder="Nhập tên chủ tài khoản"
-                      required
-                    />
-                  </Form.Group>
-                </Col>
-                <Col md={3}>
-                  <Form.Group className="mb-0">
-                    <Form.Label>Tên ngân hàng</Form.Label>
-                    <Form.Select
-                      name="bankName"
-                      value={bankInfo.bankName}
-                      onChange={handleBankInfoChange}
-                      required
-                    >
-                      <option value="">Chọn ngân hàng</option>
-                      <option value="MB Bank">MB Bank</option>
-                      <option value="Techcombank">Techcombank</option>
-                      <option value="Vietcombank">Vietcombank</option>
-                      <option value="BIDV">BIDV</option>
-                      <option value="HDBank">HDBank</option>
-                      <option value="VPBank">VPBank</option>
-                      <option value="TPBank">TPBank</option>
-                    </Form.Select>
-                  </Form.Group>
-                </Col>
-                <Col md={3}>
-                  <Form.Group className="mb-0">
-                    <Form.Label>Chi nhánh</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="branch"
-                      value={bankInfo.branch}
-                      onChange={handleBankInfoChange}
-                      placeholder="Nhập chi nhánh ngân hàng"
-                    />
-                  </Form.Group>
-                </Col>
-              </Row>
-              <div className="mt-3">
-                <Button variant="primary" type="submit">
-                  Lưu thông tin ngân hàng
-                </Button>
-              </div>
-            </Form>
-          ) : (
-            <>
-              {savedBankInfo && (
-                <div>
-                  <Row className="mb-3">
-                    <Col md={6}>
-                      <strong>Số tài khoản:</strong>{" "}
-                      {savedBankInfo.accountNumber}
-                    </Col>
-                    <Col md={6}>
-                      <strong>Tên tài khoản:</strong>{" "}
-                      {savedBankInfo.accountName}
-                    </Col>
-                  </Row>
-                  <Row className="mb-3">
-                    <Col md={6}>
-                      <strong>Tên ngân hàng:</strong> {savedBankInfo.bankName}
-                    </Col>
-                    <Col md={6}>
-                      <strong>Chi nhánh:</strong>{" "}
-                      {savedBankInfo.branch || "N/A"}
-                    </Col>
-                  </Row>
-                  <Button variant="outline-primary" onClick={handleEdit}>
-                    Chỉnh sửa thông tin ngân hàng
-                  </Button>
-                </div>
-              )}
-            </>
-          )}
-        </Card.Body>
-      </Card> */}
-
-      <Row className="mb-4">
+      {/* <Row className="mb-4">
         <Col md={6}>
           <Card>
             <Card.Header as="h5">Thanh toán từ Admin</Card.Header>
@@ -679,7 +570,7 @@ const Transaction = () => {
             </tbody>
           </Table>
         </Card.Body>
-      </Card>
+      </Card> */}
 
       <TransactionDetail
         show={showModal}

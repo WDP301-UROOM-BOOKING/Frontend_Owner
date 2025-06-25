@@ -1,5 +1,4 @@
 import {
-  FaWifi,
   FaSwimmingPool,
   FaParking,
   FaConciergeBell,
@@ -9,8 +8,17 @@ import {
   FaSpa,
   FaChalkboardTeacher,
   FaDog,
-  FaWineBottle,
   FaHandsWash,
+  FaSnowflake,
+  FaTv,
+  FaWineBottle,
+  FaBath,
+  FaCoffee,
+  FaWifi,
+  FaLock,
+  FaLaptop,
+  FaVolumeMute,
+  FaHome,
 } from "react-icons/fa";
 
 export const cityOptionSelect = [
@@ -222,6 +230,97 @@ export const listFacilities = [
   },
 ];
 
+export const roomFacilities = [
+  {
+    name: "Air Conditioning",
+    description: "Provides cool and comfortable air on hot days.",
+    icon: "FaSnowflake",
+    iconTemp: FaSnowflake,
+  },
+  {
+    name: "Flat-screen TV",
+    description: "Enjoy your favorite shows on a high-definition screen.",
+    icon: "FaTv",
+    iconTemp: FaTv,
+  },
+  {
+    name: "Mini Bar",
+    description: "Snacks and beverages are available.",
+    icon: "FaWineBottle",
+    iconTemp: FaWineBottle,
+  },
+  {
+    name: "Private Bathroom",
+    description: "Includes shower, bathtub, and free toiletries.",
+    icon: "FaBath",
+    iconTemp: FaBath,
+  },
+  {
+    name: "Coffee Maker",
+    description: "Brew fresh coffee right in your room.",
+    icon: "FaCoffee",
+    iconTemp: FaCoffee,
+  },
+  {
+    name: "High-speed Wi-Fi",
+    description: "Fast and stable internet connection.",
+    icon: "FaWifi",
+    iconTemp: FaWifi,
+  },
+  {
+    name: "In-room Safe",
+    description: "Safely store valuables and important documents.",
+    icon: "FaLock",
+    iconTemp: FaLock,
+  },
+  {
+    name: "Work Desk",
+    description: "Convenient workspace for business travelers.",
+    icon: "FaLaptop",
+    iconTemp: FaLaptop,
+  },
+  {
+    name: "Soundproofing",
+    description: "Ensures a quiet and relaxing stay.",
+    icon: "FaVolumeMute",
+    iconTemp: FaVolumeMute,
+  },
+  {
+    name: "Balcony",
+    description: "Enjoy a private outdoor space with a beautiful view.",
+    icon: "FaHome",
+    iconTemp: FaHome,
+  },
+];
+
+export const bedTypes = [
+  {
+    _id: 1,
+    name: "Single Bed",
+    description: "A single bed suitable for one person. Width: 90 - 130 cm.",
+    bedWidth: "Width 90 - 130 cm",
+  },
+  {
+    _id: 2,
+    name: "Double Bed",
+    description: "A double bed ideal for two people. Width: 131 - 150 cm.",
+    bedWidth: "Width 131 - 150 cm",
+  },
+  {
+    _id: 3,
+    name: "King Bed",
+    description:
+      "A king-size bed for extra comfort, suitable for two or more people. Width: 151 - 180 cm.",
+    bedWidth: "Width 151 - 180 cm",
+  },
+  {
+    _id: 4,
+    name: "Super King Beds",
+    description:
+      "Room with two large single beds, suitable for two people. Total width: 181 - 210 cm.",
+    bedWidth: "Width 181 - 210 cm",
+  },
+];
 
 export const wardsByDistrict = {
   // ===== ĐÀ NẴNG =====
@@ -1253,4 +1352,4 @@ export const wardsByDistrict = {
     { value: "Tam Thôn Hiệp", label: "Tam Thôn Hiệp" },
     { value: "Thạnh An", label: "Thạnh An" },
   ],
-}
+};
