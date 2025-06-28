@@ -31,25 +31,8 @@ const initialState = {
     email: "",
   },
   checkCreateHotel: false,
-  createRoom: [
-    // {
-    //   name: "",
-    //   type: "",
-    //   price: 0,
-    //   capacity: 0,
-    //   description: "",
-    //   images: [],
-    //   facilities: [],
-    //   quantity: 0,
-    //   hotel: "",
-    //   bed: [
-    //     {
-    //       bed: "",
-    //       quantity: 0,
-    //     }
-    //   ]
-    // },
-  ],
+  createService: [],
+  createRoom: [],
 };
 
 const favoriteHotelReducer = (state = initialState, action) => {
@@ -191,6 +174,28 @@ const favoriteHotelReducer = (state = initialState, action) => {
           ...state.createHotel,
           businessDocuments: action.payload.businessDocuments,
         },
+      };
+    case HotelActions.SAVE_SERVICE_CREATE:
+      return {
+        ...state,
+        createService: [...state.createService, action.payload],
+      };
+    case HotelActions.EDIT_SERVICE_CREATE:
+      return {
+        ...state,
+        createService: state.createService.map((service, index) =>
+          index === action.payload.index ? { ...service, ...action.payload.serviceData } : service
+        ),
+      };
+    case HotelActions.DELETE_SERVICE_CREATE:
+      return {
+        ...state,
+        createService: state.createService.filter((_, index) => index !== action.payload.index),
+      };
+    case HotelActions.CLEAR_SERVICE_CREATE:
+      return {
+        ...state,
+        createService: [],
       };
     default:
       return state;

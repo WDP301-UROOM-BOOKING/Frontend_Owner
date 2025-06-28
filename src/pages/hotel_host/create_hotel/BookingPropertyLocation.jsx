@@ -1,5 +1,5 @@
 import * as Routers from "../../../utils/Routes";
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from "react";
 import {
   Navbar,
   Container,
@@ -9,110 +9,136 @@ import {
   ProgressBar,
   Row,
   Col,
-} from 'react-bootstrap'
-import 'bootstrap/dist/css/bootstrap.min.css'
-import { ArrowLeft } from 'lucide-react'
-import { cityOptionSelect, districtsByCity, wardsByDistrict } from '@utils/data'
-import { useNavigate } from 'react-router-dom'
-import { useAppDispatch, useAppSelector } from '@redux/store'
-import { showToast, ToastProvider } from '@components/ToastContainer'
-import HotelActions from '@redux/hotel/actions'
-
+} from "react-bootstrap";
+import "bootstrap/dist/css/bootstrap.min.css";
+import { ArrowLeft } from "lucide-react";
+import {
+  cityOptionSelect,
+  districtsByCity,
+  wardsByDistrict,
+} from "@utils/data";
+import { useNavigate } from "react-router-dom";
+import { useAppDispatch, useAppSelector } from "@redux/store";
+import { showToast, ToastProvider } from "@components/ToastContainer";
+import HotelActions from "@redux/hotel/actions";
 
 export default function BookingLocation() {
-  const navigate = useNavigate()
-  const dispatch = useAppDispatch()
-  const createHotel = useAppSelector((state) => state.Hotel.createHotel)
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const createHotel = useAppSelector((state) => state.Hotel.createHotel);
 
   // Initialize state with values from Redux store or empty strings
-  const [selectedCity, setSelectedCity] = useState(createHotel?.city || '')
-  const [selectedDistrict, setSelectedDistrict] = useState(createHotel?.district || '')
-  const [selectedWard, setSelectedWard] = useState(createHotel?.ward || '')
-  const [specificAddress, setSpecificAddress] = useState(createHotel?.specificAddress || '')
-  const [generalAddress, setGeneralAddress] = useState(createHotel?.address || '')
+  const [selectedCity, setSelectedCity] = useState(createHotel?.city || "");
+  const [selectedDistrict, setSelectedDistrict] = useState(
+    createHotel?.district || ""
+  );
+  const [selectedWard, setSelectedWard] = useState(createHotel?.ward || "");
+  const [specificAddress, setSpecificAddress] = useState(
+    createHotel?.specificAddress || ""
+  );
+  const [generalAddress, setGeneralAddress] = useState(
+    createHotel?.address || ""
+  );
 
-  const [availableDistricts, setAvailableDistricts] = useState([])
-  const [availableWards, setAvailableWards] = useState([])
+  const [availableDistricts, setAvailableDistricts] = useState([]);
+  const [availableWards, setAvailableWards] = useState([]);
 
   // Initialize districts and wards when component mounts with existing data
   useEffect(() => {
     if (selectedCity) {
-      const districts = districtsByCity[selectedCity] || []
-      setAvailableDistricts(districts)
-      
+      const districts = districtsByCity[selectedCity] || [];
+      setAvailableDistricts(districts);
+
       if (selectedDistrict) {
-        const wards = wardsByDistrict[selectedDistrict] || []
-        setAvailableWards(wards)
+        const wards = wardsByDistrict[selectedDistrict] || [];
+        setAvailableWards(wards);
       }
     }
-  }, []) // Run only on mount
+  }, []); // Run only on mount
 
   // Update districts when city changes
   useEffect(() => {
     if (selectedCity) {
-      const districts = districtsByCity[selectedCity] || []
-      setAvailableDistricts(districts)
-      
+      const districts = districtsByCity[selectedCity] || [];
+      setAvailableDistricts(districts);
+
       // Only reset district and ward if the current district is not valid for the new city
-      const isDistrictValid = districts.some(d => d.value === selectedDistrict)
+      const isDistrictValid = districts.some(
+        (d) => d.value === selectedDistrict
+      );
       if (!isDistrictValid) {
-        setSelectedDistrict('')
-        setSelectedWard('')
-        setAvailableWards([])
+        setSelectedDistrict("");
+        setSelectedWard("");
+        setAvailableWards([]);
       }
     } else {
-      setAvailableDistricts([])
-      setSelectedDistrict('')
-      setSelectedWard('')
-      setAvailableWards([])
+      setAvailableDistricts([]);
+      setSelectedDistrict("");
+      setSelectedWard("");
+      setAvailableWards([]);
     }
-  }, [selectedCity])
+  }, [selectedCity]);
 
   // Update wards when district changes
   useEffect(() => {
     if (selectedDistrict) {
-      const wards = wardsByDistrict[selectedDistrict] || []
-      setAvailableWards(wards)
-      
+      const wards = wardsByDistrict[selectedDistrict] || [];
+      setAvailableWards(wards);
+
       // Only reset ward if the current ward is not valid for the new district
-      const isWardValid = wards.some(w => w.value === selectedWard)
+      const isWardValid = wards.some((w) => w.value === selectedWard);
       if (!isWardValid) {
-        setSelectedWard('')
+        setSelectedWard("");
       }
     } else {
-      setAvailableWards([])
-      setSelectedWard('')
+      setAvailableWards([]);
+      setSelectedWard("");
     }
-  }, [selectedDistrict])
+  }, [selectedDistrict]);
 
   // Update general address when location changes
   useEffect(() => {
-    const addressParts = []
-    if (specificAddress?.trim()) addressParts.push(specificAddress.trim())
-    if (selectedWard) addressParts.push(selectedWard)
-    if (selectedDistrict) addressParts.push(selectedDistrict)
-    if (selectedCity) addressParts.push(selectedCity)
-    
-    setGeneralAddress(addressParts.join(', '))
-  }, [specificAddress, selectedWard, selectedDistrict, selectedCity])
+    const addressParts = [];
+    if (specificAddress?.trim()) addressParts.push(specificAddress.trim());
+
+    if (selectedWard) {
+      // Check if ward already contains "Phường" prefix
+      const wardText = selectedWard.toLowerCase().includes("phường")
+        ? selectedWard
+        : `Phường ${selectedWard}`;
+      addressParts.push(wardText);
+    }
+
+    if (selectedDistrict) {
+      // Check if district already contains "Quận" prefix
+      const districtText = selectedDistrict.toLowerCase().includes("quận")
+        ? selectedDistrict
+        : `Quận ${selectedDistrict}`;
+      addressParts.push(districtText);
+    }
+
+    if (selectedCity) addressParts.push(`Thành phố ${selectedCity}`);
+
+    setGeneralAddress(addressParts.join(", "));
+  }, [specificAddress, selectedWard, selectedDistrict, selectedCity]);
 
   const handleContinue = () => {
     // Validate required fields
     if (!selectedCity) {
-      showToast.warning('Vui lòng chọn thành phố')
-      return
+      showToast.warning("Vui lòng chọn thành phố");
+      return;
     }
     if (!selectedDistrict) {
-      showToast.warning('Vui lòng chọn quận/huyện')
-      return
+      showToast.warning("Vui lòng chọn quận/huyện");
+      return;
     }
     if (!selectedWard) {
-      showToast.warning('Vui lòng chọn phường/xã')
-      return
+      showToast.warning("Vui lòng chọn phường/xã");
+      return;
     }
     if (!specificAddress?.trim()) {
-      showToast.warning('Vui lòng nhập địa chỉ cụ thể')
-      return
+      showToast.warning("Vui lòng nhập địa chỉ cụ thể");
+      return;
     }
 
     // Dispatch action to save data
@@ -125,39 +151,39 @@ export default function BookingLocation() {
         district: selectedDistrict,
         ward: selectedWard,
       },
-    })
+    });
 
     // Navigate to next step
-    navigate(Routers.BookingPropertyFacility)
-  }
+    navigate(Routers.BookingPropertyFacility);
+  };
 
   const handleBack = () => {
     // Save current data before going back
     dispatch({
       type: HotelActions.SAVE_HOTEL_ADDRESS_CREATE,
       payload: {
-        specificAddress: specificAddress?.trim() || '',
+        specificAddress: specificAddress?.trim() || "",
         address: generalAddress,
         city: selectedCity,
         district: selectedDistrict,
         ward: selectedWard,
       },
-    })
-    
+    });
+
     // Navigate back (you can replace with actual back route)
-    navigate(Routers.BookingPropertyName)
-  }
+    navigate(Routers.BookingPropertyName);
+  };
 
   return (
     <div className="booking-app">
       <ToastProvider />
-      
+
       {/* Navigation Bar */}
-      <Navbar style={{ backgroundColor: '#003580' }}>
+      <Navbar style={{ backgroundColor: "#003580" }}>
         <Container>
           <Navbar.Brand href="#home" className="text-white fw-bold">
             <b style={{ fontSize: 30 }}>
-              UR<span style={{ color: '#f8e71c' }}>OO</span>M
+              UR<span style={{ color: "#f8e71c" }}>OO</span>M
             </b>
           </Navbar.Brand>
         </Container>
@@ -169,7 +195,7 @@ export default function BookingLocation() {
           <div className="progress-label mb-2">
             <h5>Thông tin cơ bản</h5>
           </div>
-          <ProgressBar style={{ height: '20px' }}>
+          <ProgressBar style={{ height: "20px" }}>
             <ProgressBar variant="primary" now={20} key={1} />
             <ProgressBar variant="primary" now={20} key={2} />
             <ProgressBar variant="secondary" now={20} key={3} />
@@ -194,7 +220,7 @@ export default function BookingLocation() {
                   <Form.Label className="fw-bold">
                     Thành phố <span className="text-danger">*</span>
                   </Form.Label>
-                  <Form.Select 
+                  <Form.Select
                     className="form-input"
                     value={selectedCity}
                     onChange={(e) => setSelectedCity(e.target.value)}
@@ -213,7 +239,7 @@ export default function BookingLocation() {
                   <Form.Label className="fw-bold">
                     Quận/Huyện <span className="text-danger">*</span>
                   </Form.Label>
-                  <Form.Select 
+                  <Form.Select
                     className="form-input"
                     value={selectedDistrict}
                     onChange={(e) => setSelectedDistrict(e.target.value)}
@@ -238,7 +264,7 @@ export default function BookingLocation() {
                   <Form.Label className="fw-bold">
                     Phường/Xã <span className="text-danger">*</span>
                   </Form.Label>
-                  <Form.Select 
+                  <Form.Select
                     className="form-input"
                     value={selectedWard}
                     onChange={(e) => setSelectedWard(e.target.value)}
@@ -305,7 +331,12 @@ export default function BookingLocation() {
                 variant="primary"
                 className="continue-button"
                 onClick={handleContinue}
-                disabled={!selectedCity || !selectedDistrict || !selectedWard || !specificAddress?.trim()}
+                disabled={
+                  !selectedCity ||
+                  !selectedDistrict ||
+                  !selectedWard ||
+                  !specificAddress?.trim()
+                }
               >
                 Tiếp tục
               </Button>
@@ -352,9 +383,10 @@ export default function BookingLocation() {
                         Tại sao tôi cần điền đúng địa chỉ cho chỗ nghỉ của mình?
                       </h5>
                       <p className="info-text mt-3">
-                        Địa chỉ chính xác giúp khách hàng dễ dàng tìm thấy chỗ nghỉ của bạn. 
-                        Thông tin này sẽ hiển thị trên bản đồ và trong kết quả tìm kiếm, 
-                        giúp tăng độ tin cậy và khả năng đặt phòng từ khách hàng.
+                        Địa chỉ chính xác giúp khách hàng dễ dàng tìm thấy chỗ
+                        nghỉ của bạn. Thông tin này sẽ hiển thị trên bản đồ và
+                        trong kết quả tìm kiếm, giúp tăng độ tin cậy và khả năng
+                        đặt phòng từ khách hàng.
                       </p>
                     </div>
                   </div>
@@ -405,7 +437,8 @@ export default function BookingLocation() {
           border: 1px solid #ced4da;
           border-radius: 6px;
           font-size: 16px;
-          transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+          transition: border-color 0.15s ease-in-out,
+            box-shadow 0.15s ease-in-out;
         }
 
         .form-input:focus {
@@ -521,20 +554,20 @@ export default function BookingLocation() {
           .main-heading {
             font-size: 24px;
           }
-          
+
           .property-form-card {
             padding: 16px;
           }
-          
+
           .navigation-buttons {
             flex-direction: column;
           }
-          
+
           .back-button {
             width: 100%;
             order: 2;
           }
-          
+
           .continue-button {
             order: 1;
             margin-bottom: 12px;
@@ -542,5 +575,5 @@ export default function BookingLocation() {
         }
       `}</style>
     </div>
-  )
+  );
 }

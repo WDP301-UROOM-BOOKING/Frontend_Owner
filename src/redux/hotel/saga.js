@@ -242,10 +242,10 @@ function* createHotelService() {
 
 function* createHotel() {
   yield takeEvery(HotelActions.CREATE_HOTEL, function* (action) {
-    const { createHotel, onSuccess, onFailed, onError } = action.payload || {};
+    const { createHotel, createRoomList, createService, onSuccess, onFailed, onError } = action.payload || {};
     try {
       console.log("Creating hotel with data:", createHotel);
-      const response = yield call(() => Factories.createHotel(createHotel));
+      const response = yield call(() => Factories.createHotel(createHotel, createRoomList, createService));
       console.log("Create hotel response:", response);
       if (response?.status === 201) {
         yield put({

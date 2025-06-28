@@ -17,7 +17,6 @@ import { roomFacilities, bedTypes } from "@utils/data";
 import { useAppSelector } from "@redux/store";
 import ConfirmationModal from "@components/ConfirmationModal";
 import { toast } from 'react-toastify'; // Add this import if not already imported
-import { set } from "date-fns";
 
 function Room({ show, handleClose, onSave, editingRoom }) {
   const [formData, setFormData] = useState({
@@ -74,13 +73,13 @@ function Room({ show, handleClose, onSave, editingRoom }) {
         bedData = editingRoom.bed.map((bedItem) => {
           // bedItem.bed is an object with _id, name, etc.
           return {
-            bed: bedItem.bed?.name || bedItem.bed?._id || "", // Use bed name for select
-            bedId: bedItem.bed?._id || "", // Store bed ID separately
+            bed: bedItem.bed?.name || bedItem.bed?._id || bedItem.bed, // Use bed name for select
+            bedId: bedItem.bed?._id || bedItem.bed, // Store bed ID separately
             quantity: bedItem.quantity || 1,
           };
         });
       }
-
+      console.log("bedData: ", bedData);
       setFormData({
         name: editingRoom.name || "",
         type: editingRoom.type || "Phòng đơn",
@@ -134,8 +133,10 @@ function Room({ show, handleClose, onSave, editingRoom }) {
 
     if (field === "bed") {     
       const selectedBedType = bedTypes.find((bedType) => bedType._id === Number(value));
-      newBeds[index].bed = selectedBedType._id;
-      newBeds[index].bedId = selectedBedType?._id || "";
+      if(selectedBedType) {
+        newBeds[index].bed = selectedBedType.name; // Store bed name for display
+        newBeds[index].bedId = selectedBedType._id; // Store bed ID for API
+      }
     } else {
       newBeds[index][field] = value;
     }
@@ -444,7 +445,7 @@ function Room({ show, handleClose, onSave, editingRoom }) {
               value={formData.quantity}
               onChange={(e) => handleInputChange("quantity", e.target.value)}
               isInvalid={!!errors.quantity}
-              disabled={editingRoom} // Disable in edit mode
+              //disabled={editingRoom}
             />
             <Form.Control.Feedback type="invalid">
               {errors.quantity}

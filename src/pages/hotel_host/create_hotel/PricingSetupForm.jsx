@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import * as Routers from "../../../utils/Routes";
 import {
   Container,
   Row,
@@ -12,22 +13,60 @@ import {
 } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import RoomActions from "@redux/room/actions";
+import { showToast, ToastProvider } from "@components/ToastContainer";
+import Utils from "@utils/Utils";
+import ConfirmationModal from "@components/ConfirmationModal";
 
 function PricingSetupForm() {
-  const [price, setPrice] = useState("125.000");
-  const [sliderValue, setSliderValue] = useState(87033);
-  const [helpfulFeedback, setHelpfulFeedback] = useState(null);
-  const navigate= useNavigate();
+  const [showAcceptModal, setShowAcceptModal] = useState(false);
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const [price, setPrice] = useState("0");
+  const createRoom = useSelector(state => state.Room.createRoom);
+  
 
   const handlePriceChange = (e) => {
-    setPrice(e.target.value);
+    // Remove non-digits and format
+    const value = e.target.value.replace(/\D/g, "");
+    setPrice(value);
   };
 
-  const handleSliderChange = (e) => {
-    setSliderValue(e.target.value);
-  };
+  const handleContinue = () => {
+    // Save pricing and complete room creation
+    const finalPrice = Number(price);
+    
+    dispatch({
+      type: RoomActions.SAVE_ROOM_PRICING_CREATE,
+      payload: { price: finalPrice }
+    });
 
+    // Add completed room to create list
+    const completeRoom = {
+      ...createRoom,
+      price: finalPrice
+    };
+
+    dispatch({
+      type: RoomActions.SAVE_ROOM_TO_CREATE_LIST,
+      payload: completeRoom
+    });
+
+    // Clear current room creation data
+    dispatch({
+      type: RoomActions.CLEAR_ROOM_CREATE
+    });
+
+    showToast.success("Thêm phòng thành công!");
+    navigate(Routers.BookingPropertyChecklist);
+  };
+  
   const styles = {
+    bookingApp: {
+      minHeight: "100vh",
+      backgroundColor: "#f8f9fa",
+    },
     container: {
       maxWidth: "1000px",
       margin: "20px auto",
@@ -181,6 +220,7 @@ function PricingSetupForm() {
 
   return (
     <div style={styles.bookingApp}>
+      <ToastProvider />
       {/* Navigation Bar */}
       <Navbar style={styles.navbarCustom}>
         <Container>
@@ -202,7 +242,7 @@ function PricingSetupForm() {
             <ProgressBar variant="primary" now={25} key={1} />
             <ProgressBar variant="primary" now={25} key={2} />
             <ProgressBar variant="primary" now={25} key={3} />
-            <ProgressBar variant="secondary" now={25} key={4} />
+            <ProgressBar variant="primary" now={25} key={4} />
           </ProgressBar>
         </div>
       </Container>
@@ -216,11 +256,12 @@ function PricingSetupForm() {
               <Form.Group>
                 <Form.Label>Số tiền khách trả</Form.Label>
                 <InputGroup style={styles.priceInput}>
-                  <InputGroup.Text>VND</InputGroup.Text>
+                  <InputGroup.Text>$</InputGroup.Text>
                   <Form.Control
                     type="text"
-                    value={price}
+                    value={Utils.formatCurrency(price)}
                     onChange={handlePriceChange}
+                    placeholder="Nhập giá phòng"
                   />
                 </InputGroup>
                 <Form.Text style={styles.smallText}>
@@ -252,7 +293,7 @@ function PricingSetupForm() {
               </div>
 
               <div style={styles.revenueRow}>
-                <strong>VND 105.000</strong>
+                <strong>{Utils.formatCurrency(price * 88 / 100)}</strong>
                 <span>Doanh thu của Quý vị (bao gồm thuế)</span>
               </div>
             </div>
@@ -285,19 +326,26 @@ function PricingSetupForm() {
           <Button 
             style={styles.backButton}
             onClick={() => {
-              navigate("/RoomNamingForm");
+              navigate("/RoomImageForm");
             }}
           >←</Button>
           <Button 
             style={styles.continueButton}
-            onClick={() => {
-              navigate("/RoomImageForm");
-            }}
+            onClick={() => setShowAcceptModal(true)}
           >
-            Tiếp tục
+            Hoàn thành
           </Button>
         </div>
       </Container>
+      <ConfirmationModal
+        show={showAcceptModal}
+        onHide={() => setShowAcceptModal(false)}
+        onConfirm={handleContinue}
+        title="Confirm Acceptance"
+        message="Are you sure you want to create room setup?"
+        confirmButtonText="Accept"
+        type="accept"
+      />
     </div>
   );
 }
