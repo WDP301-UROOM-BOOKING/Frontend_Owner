@@ -34,6 +34,7 @@ import AuthActions from "@redux/auth/actions";
 import { disconnectSocket } from "@redux/socket/socketSlice";
 import { Manager } from "socket.io-client";
 import ManagementBooking from "@pages/management_booking/ManagementBooking";
+import MyReportPage from "../report/MyReportPage";
 
 ChartJS.register(
   CategoryScale,
@@ -210,6 +211,20 @@ function App() {
             <li className="nav-item">
               <a
                 className={`nav-link ${
+                  activeTab === "my_report" ? "active" : ""
+                }`}
+                href="#"
+                onClick={() => {
+                  setActiveTab("my_report");
+                }}
+              >
+                <i className="bi bi-exclamation-triangle-fill"></i>
+                <span style={{marginLeft: '5px'}}>Quản lý báo cáo</span>
+              </a>
+            </li>
+            <li className="nav-item">
+              <a
+                className={`nav-link ${
                   activeTab === "setting" ? "active" : ""
                 }`}
                 href="#"
@@ -379,7 +394,7 @@ function App() {
 
             {activeTab === "revenue" && <RevenuePage />}
             {activeTab === "management_bookings" && <ManagementBooking />}
-
+            {activeTab === "my_report" && <MyReportPage />}
           </div>
         </div>
       </div>

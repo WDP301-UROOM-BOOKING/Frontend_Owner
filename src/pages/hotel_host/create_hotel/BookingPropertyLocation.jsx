@@ -26,7 +26,7 @@ export default function BookingLocation() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const createHotel = useAppSelector((state) => state.Hotel.createHotel);
-
+  console.log(cityOptionSelect, districtsByCity, wardsByDistrict);
   // Initialize state with values from Redux store or empty strings
   const [selectedCity, setSelectedCity] = useState(createHotel?.city || "");
   const [selectedDistrict, setSelectedDistrict] = useState(
@@ -102,22 +102,14 @@ export default function BookingLocation() {
     if (specificAddress?.trim()) addressParts.push(specificAddress.trim());
 
     if (selectedWard) {
-      // Check if ward already contains "Phường" prefix
-      const wardText = selectedWard.toLowerCase().includes("phường")
-        ? selectedWard
-        : `Phường ${selectedWard}`;
-      addressParts.push(wardText);
+      addressParts.push(`${selectedWard}`);
     }
 
     if (selectedDistrict) {
-      // Check if district already contains "Quận" prefix
-      const districtText = selectedDistrict.toLowerCase().includes("quận")
-        ? selectedDistrict
-        : `Quận ${selectedDistrict}`;
-      addressParts.push(districtText);
+      addressParts.push(`${selectedDistrict}`);
     }
 
-    if (selectedCity) addressParts.push(`Thành phố ${selectedCity}`);
+    if (selectedCity) addressParts.push(`${selectedCity}`);
 
     setGeneralAddress(addressParts.join(", "));
   }, [specificAddress, selectedWard, selectedDistrict, selectedCity]);
