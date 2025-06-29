@@ -8,6 +8,7 @@ import FeedbackReducer from "./feedback/reducer";
 import MonthlyPaymentReducer from "./monthlyPayment/reducer";
 import messageReducer from './message/reducer';
 import SocketReducer from './socket/socketSlice';
+import DashboardReducer from './dashboard/reducer';
 
 const rootReducer = combineReducers({
     Auth: AuthReducer,
@@ -19,6 +20,7 @@ const rootReducer = combineReducers({
     MonthlyPayment: MonthlyPaymentReducer,
     Message: messageReducer,
     Socket: SocketReducer,
+    Dashboard: DashboardReducer,
 });
 
 export default rootReducer;

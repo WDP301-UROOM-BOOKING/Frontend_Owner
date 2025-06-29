@@ -1,7 +1,43 @@
 import { Line, Bar, Pie, Doughnut } from "react-chartjs-2";
+import { useEffect, useState } from "react";
 
 const RevenuePage = () => {
-  const revenueData = {
+  // State for real data
+  const [realData, setRealData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    // Fetch real data from backend
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch("http://localhost:5000/api/dashboard-owner/metrics", {
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        });
+        const json = await res.json();
+        if (json.success && json.data) {
+          setRealData(json.data);
+        } else {
+          setRealData(null);
+        }
+      } catch (err) {
+        setError("Không thể tải dữ liệu thực tế");
+        setRealData(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  // Fallback mock data
+  const fallbackRevenueData = {
     labels: [
       "T1",
       "T2",
@@ -42,8 +78,8 @@ const RevenuePage = () => {
     ],
   };
 
-  // Dữ liệu biểu đồ kênh đặt phòng
-  const bookingChannelData = {
+  // Fallback booking channel data
+  const fallbackBookingChannelData = {
     labels: [
       "Website khách sạn",
       "OTAs",
@@ -65,6 +101,61 @@ const RevenuePage = () => {
       },
     ],
   };
+
+  // Fallback room type data
+  const fallbackRoomTypeRows = [
+    { type: "Standard", quantity: 20, occupancy: "85%", avgPrice: "1.2M", revenue: "408M", percent: "32.6%" },
+    { type: "Deluxe", quantity: 15, occupancy: "78%", avgPrice: "1.8M", revenue: "421M", percent: "33.7%" },
+    { type: "Suite", quantity: 8, occupancy: "65%", avgPrice: "3.5M", revenue: "364M", percent: "29.1%" },
+    { type: "Presidential", quantity: 2, occupancy: "45%", avgPrice: "6.5M", revenue: "58.5M", percent: "4.6%" },
+  ];
+
+  // Helper for currency formatting
+  const formatCurrency = (amount) => {
+    if (typeof amount !== "number") return amount;
+    if (amount >= 1000000000) {
+      return `$${(amount / 1000000000).toFixed(1)}B`;
+    } else if (amount >= 1000000) {
+      return `$${(amount / 1000000).toFixed(1)}M`;
+    } else if (amount >= 1000) {
+      return `$${(amount / 1000).toFixed(1)}K`;
+    }
+    return `$${amount}`;
+  };
+
+  // Use real data if available, otherwise fallback
+  const revenueData = realData?.revenueData ? {
+    ...fallbackRevenueData,
+    datasets: [
+      {
+        ...fallbackRevenueData.datasets[0],
+        data: realData.revenueData,
+      },
+      fallbackRevenueData.datasets[1],
+    ],
+  } : fallbackRevenueData;
+
+  // KPI values - sử dụng tổng doanh thu cho hiển thị chính
+  const totalRevenue = realData?.totalRevenue ?? 1250000000;
+  const completedRevenue = realData?.completedRevenue ?? 1000000000;
+  const revpar = realData?.revpar ?? 1800000;
+  const adr = realData?.adr ?? 2200000;
+  const profit = realData?.profit ?? 420000000;
+
+  // Booking channel data (mock, unless you have real data)
+  const bookingChannelData = fallbackBookingChannelData;
+
+  // Room type rows (mock, unless you have real data)
+  const roomTypeRows = realData?.revenueByRoomType?.length > 0
+    ? realData.revenueByRoomType.map(row => ({
+        type: row.type,
+        quantity: row.quantity,
+        occupancy: (row.occupancy * 100).toFixed(0) + "%",
+        avgPrice: formatCurrency(row.avgPrice),
+        revenue: formatCurrency(row.revenue),
+        percent: row.percent + "%"
+      }))
+    : fallbackRoomTypeRows;
 
   return (
     <>
@@ -93,10 +184,15 @@ const RevenuePage = () => {
           <div className="card h-100">
             <div className="card-body">
               <h6 className="text-muted">Tổng doanh thu</h6>
-              <h3 className="mb-0">1.25 Tỷ</h3>
+              <h3 className="mb-0">{formatCurrency(totalRevenue)}</h3>
               <small className="text-success">
                 <i className="bi bi-arrow-up"></i> 12.5% so với kỳ trước
               </small>
+              <div className="mt-2">
+                <small className="text-muted">
+                  Đã hoàn thành: {formatCurrency(completedRevenue)}
+                </small>
+              </div>
             </div>
           </div>
         </div>
@@ -104,7 +200,7 @@ const RevenuePage = () => {
           <div className="card h-100">
             <div className="card-body">
               <h6 className="text-muted">RevPAR</h6>
-              <h3 className="mb-0">1.8M</h3>
+              <h3 className="mb-0">{formatCurrency(revpar)}</h3>
               <small className="text-success">
                 <i className="bi bi-arrow-up"></i> 8.3% so với kỳ trước
               </small>
@@ -115,7 +211,7 @@ const RevenuePage = () => {
           <div className="card h-100">
             <div className="card-body">
               <h6 className="text-muted">ADR</h6>
-              <h3 className="mb-0">2.2M</h3>
+              <h3 className="mb-0">{formatCurrency(adr)}</h3>
               <small className="text-success">
                 <i className="bi bi-arrow-up"></i> 5.2% so với kỳ trước
               </small>
@@ -126,7 +222,7 @@ const RevenuePage = () => {
           <div className="card h-100">
             <div className="card-body">
               <h6 className="text-muted">Lợi nhuận</h6>
-              <h3 className="mb-0">420M</h3>
+              <h3 className="mb-0">{formatCurrency(profit)}</h3>
               <small className="text-success">
                 <i className="bi bi-arrow-up"></i> 15.8% so với kỳ trước
               </small>
@@ -211,43 +307,27 @@ const RevenuePage = () => {
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td>Standard</td>
-                  <td>20</td>
-                  <td>85%</td>
-                  <td>1.2M</td>
-                  <td>408M</td>
-                  <td>32.6%</td>
-                </tr>
-                <tr>
-                  <td>Deluxe</td>
-                  <td>15</td>
-                  <td>78%</td>
-                  <td>1.8M</td>
-                  <td>421M</td>
-                  <td>33.7%</td>
-                </tr>
-                <tr>
-                  <td>Suite</td>
-                  <td>8</td>
-                  <td>65%</td>
-                  <td>3.5M</td>
-                  <td>364M</td>
-                  <td>29.1%</td>
-                </tr>
-                <tr>
-                  <td>Presidential</td>
-                  <td>2</td>
-                  <td>45%</td>
-                  <td>6.5M</td>
-                  <td>58.5M</td>
-                  <td>4.6%</td>
-                </tr>
+                {roomTypeRows.map((row, idx) => (
+                  <tr key={idx}>
+                    <td>{row.type}</td>
+                    <td>{row.quantity}</td>
+                    <td>{row.occupancy}</td>
+                    <td>{row.avgPrice}</td>
+                    <td>{row.revenue}</td>
+                    <td>{row.percent}</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
         </div>
       </div>
+      {loading && (
+        <div className="alert alert-info">Đang tải dữ liệu thực...</div>
+      )}
+      {error && (
+        <div className="alert alert-danger">{error}</div>
+      )}
     </>
   );
 };
