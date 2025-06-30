@@ -39,7 +39,9 @@ const ApiConstants = {
 
 
   //Room:
+  FETCH_ROOM: "/room/rooms_information/:hotelId",
   ROOMS_BY_HOTEL_ID: (hotelId) => `/room/list_room/${hotelId}`,
+  CREATE_BOOKING_OFFLINE: "/payment/create-booking-offline",
 };
 
 export default ApiConstants;

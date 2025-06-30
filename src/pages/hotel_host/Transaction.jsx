@@ -21,13 +21,14 @@ import MonthlyPaymentActions from "@redux/monthlyPayment/actions";
 import Utils from "@utils/Utils";
 
 const Transaction = () => {
-
   const dispatch = useDispatch();
   const { reservations } = useSelector((state) => state.Reservation);
   const { list } = useSelector((state) => state.MonthlyPayment);
-  const [selectedAdminYear, setSelectedAdminYear] = useState(new Date().getFullYear());
+  const [selectedAdminYear, setSelectedAdminYear] = useState(
+    new Date().getFullYear()
+  );
 
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth()+1);
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [selectedStatus, setSelectedStatus] = useState("All");
   const [selectedSort, setSelectedSort] = useState("desc");
@@ -211,22 +212,34 @@ const Transaction = () => {
 
     return items;
   };
-  const calculateTotalPrice = (rooms) => {
-    if (!rooms || !Array.isArray(rooms)) return 0;
-    return rooms.reduce((total, roomItem) => {
-      const roomPrice = roomItem.room?.price || 0;
-      const quantity = roomItem.quantity || 1;
-      return total + roomPrice * quantity;
-    }, 0);
-  };
 
   const totalCustomerPaid = reservations?.reduce(
     (sum, r) => sum + r.totalPrice,
     0
   );
 
-  const totalCommission = Math.floor(totalCustomerPaid * 0.12);
-  const totalAmountToHost = Math.floor(totalCustomerPaid * 0.88);
+  // Separate calculations for online and offline reservations
+  const onlineReservations =
+    reservations?.filter((r) => r.status !== "OFFLINE") || [];
+  const offlineReservations =
+    reservations?.filter((r) => r.status === "OFFLINE") || [];
+
+  const onlineTotalPaid = onlineReservations.reduce(
+    (sum, r) => sum + r.totalPrice,
+    0
+  );
+  const offlineTotalPaid = offlineReservations.reduce(
+    (sum, r) => sum + r.totalPrice,
+    0
+  );
+
+  // Commission only calculated for online reservations
+  const totalCommission = Math.floor(onlineTotalPaid * 0.12);
+
+  // Host amount: online reservations (88%) + offline reservations (100%)
+  const totalAmountToHost =
+    Math.floor(onlineTotalPaid * 0.88) + offlineTotalPaid;
+
   const completedCount =
     reservations?.filter(
       (r) => r.status === "COMPLETED" || r.status === "CHECKED OUT"
@@ -237,7 +250,6 @@ const Transaction = () => {
     reservations?.filter(
       (r) => r.status === "BOOKED" || r.status === "CHECKED IN"
     ).length || 0;
-
 
   return (
     <div className="main-content_1">
@@ -312,6 +324,7 @@ const Transaction = () => {
                         <option value="PENDING">PENDING</option>
                         <option value="CANCELLED">CANCELLED</option>
                         <option value="NOT PAID">NOT PAID</option>
+                        <option value="OFFLINE">OFFLINE</option>
                       </Form.Select>
                     </Form.Group>
                   </Col>
@@ -368,8 +381,8 @@ const Transaction = () => {
         <Card.Header as="h5">
           <div className="d-flex justify-content-between align-items-center">
             <span>
-              Danh sách thanh toán cho {getAvailableMonths()[selectedMonth - 1]} -{" "}
-              {selectedYear}
+              Danh sách thanh toán cho {getAvailableMonths()[selectedMonth - 1]}{" "}
+              - {selectedYear}
             </span>
             <span className="text-muted">
               Hiển thị {startIndex + 1}-{Math.min(endIndex, totalItems)} của{" "}
@@ -392,68 +405,141 @@ const Transaction = () => {
             </thead>
             <tbody>
               {currentReservations && currentReservations.length > 0 ? (
-                currentReservations.map((reservation, index) => (
-                  <tr
-                    key={reservation._id}
-                    onClick={() => {
-                      setShowModal(true);
-                      setDetailReservation(reservation);
-                    }}
-                    style={{ cursor: "pointer" }}
-                  >
-                    <td>{startIndex + index + 1}</td>
-                    <td>{Utils.getDate(reservation.createdAt, 18)}</td>
-                    <td>
-                      <span>
-                        {reservation.rooms &&
-                          reservation.rooms.length > 0 &&
-                          reservation.rooms.map((roomObj, idx) => {
-                            console.log("ABC: ", roomObj);
-                            return (
-                            <div key={idx}>
-                              {roomObj.room?.name} - {roomObj.quantity}{" "}
-                              rooms
-                            </div>
-                          )
-                          })}
-                      </span>
-                    </td>
-                    <td>
-                      {Utils.formatCurrency(reservation.totalPrice || 0)}
-                    </td>
-                    <td className="text-danger">
-                      {(Utils.formatCurrency(Math.floor(reservation.totalPrice * 0.12 || 0)))}
-                    </td>
-                    <td className="text-success">
-                      {(Utils.formatCurrency(Math.floor(reservation.totalPrice * 0.88 || 0)))}
-                    </td>
-                    <td>
-                      <span
-                        className={`badge ${reservation.status === "COMPLETED"
-                          ? "bg-secondary"
-                          : reservation.status === "PENDING"
-                            ? "bg-warning"
-                            : reservation.status === "CANCELLED" ||
-                              reservation.status === "NOT PAID"
-                              ? "bg-danger"
-                              : reservation.status === "BOOKED"
+                currentReservations.map((reservation, index) => {
+                  if (reservation.status !== "OFFLINE") {
+                    return (
+                      <tr
+                        key={reservation._id}
+                        onClick={() => {
+                          setShowModal(true);
+                          setDetailReservation(reservation);
+                        }}
+                        style={{ cursor: "pointer" }}
+                      >
+                        <td>{startIndex + index + 1}</td>
+                        <td>{Utils.getDate(reservation.createdAt, 18)}</td>
+                        <td>
+                          <span>
+                            {reservation.rooms &&
+                              reservation.rooms.length > 0 &&
+                              reservation.rooms.map((roomObj, idx) => {
+                                console.log("ABC: ", roomObj);
+                                return (
+                                  <div key={idx}>
+                                    {roomObj.room?.name} - {roomObj.quantity}{" "}
+                                    rooms
+                                  </div>
+                                );
+                              })}
+                          </span>
+                        </td>
+                        <td>
+                          {Utils.formatCurrency(reservation.totalPrice || 0)}
+                        </td>
+                        <td className="text-danger">
+                          {Utils.formatCurrency(
+                            Math.floor(reservation.totalPrice * 0.12 || 0)
+                          )}
+                        </td>
+                        <td className="text-success">
+                          {Utils.formatCurrency(
+                            Math.floor(reservation.totalPrice * 0.88 || 0)
+                          )}
+                        </td>
+                        <td>
+                          <span
+                            className={`badge ${
+                              reservation.status === "COMPLETED"
+                                ? "bg-secondary"
+                                : reservation.status === "PENDING"
+                                ? "bg-warning"
+                                : reservation.status === "CANCELLED" ||
+                                  reservation.status === "NOT PAID"
+                                ? "bg-danger"
+                                : reservation.status === "BOOKED"
                                 ? "bg-success"
                                 : reservation.status === "CHECKED OUT"
-                                  ? "bg-info"
-                                  : "bg-primary"
-                          }`}
-                        style={{
-                          width: "100px",
-                          height: "30px",
-                          paddingTop: "10px",
-                          paddingBottom: "10px",
+                                ? "bg-info"
+                                : "bg-primary"
+                            }`}
+                            style={{
+                              width: "100px",
+                              height: "30px",
+                              paddingTop: "10px",
+                              paddingBottom: "10px",
+                            }}
+                          >
+                            {reservation.status}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  } else {
+                    return (
+                      <tr
+                        key={reservation._id}
+                        onClick={() => {
+                          setShowModal(true);
+                          setDetailReservation(reservation);
                         }}
+                        style={{ cursor: "pointer" }}
                       >
-                        {reservation.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))
+                        <td>{startIndex + index + 1}</td>
+                        <td>{Utils.getDate(reservation.createdAt, 18)}</td>
+                        <td>
+                          <span>
+                            {reservation.rooms &&
+                              reservation.rooms.length > 0 &&
+                              reservation.rooms.map((roomObj, idx) => {
+                                console.log("ABC: ", roomObj);
+                                return (
+                                  <div key={idx}>
+                                    {roomObj.room?.name} - {roomObj.quantity}{" "}
+                                    rooms
+                                  </div>
+                                );
+                              })}
+                          </span>
+                        </td>
+                        <td>
+                          {Utils.formatCurrency(reservation.totalPrice || 0)}
+                        </td>
+                        <td className="text-danger">0</td>
+                        <td className="text-success">
+                          {Utils.formatCurrency(
+                            Math.floor(reservation.totalPrice * 1 || 0)
+                          )}
+                        </td>
+                        <td>
+                          <span
+                            className={`badge ${
+                              reservation.status === "COMPLETED"
+                                ? "bg-secondary"
+                                : reservation.status === "PENDING"
+                                ? "bg-warning"
+                                : reservation.status === "CANCELLED" ||
+                                  reservation.status === "NOT PAID"
+                                ? "bg-danger"
+                                : reservation.status === "BOOKED"
+                                ? "bg-success"
+                                : reservation.status === "CHECKED OUT"
+                                ? "bg-info"
+                                : "bg-primary"
+                            }`}
+                            style={{
+                              width: "100px",
+                              height: "30px",
+                              paddingTop: "10px",
+                              paddingBottom: "10px",
+                            }}
+                          >
+                            {reservation.status}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  }
+                })
               ) : (
                 <tr>
                   <td colSpan="7" className="text-center">
@@ -490,7 +576,7 @@ const Transaction = () => {
         </Card.Body>
       </Card>
 
-      {/* <Row className="mb-4">
+      <Row className="mb-4">
         <Col md={6}>
           <Card>
             <Card.Header as="h5">Thanh toán từ Admin</Card.Header>
@@ -539,25 +625,36 @@ const Transaction = () => {
                 list.map((payment, index) => (
                   <tr key={payment._id} className="text-center">
                     <td>{index + 1}</td>
-                    <td>{payment.month}/{payment.year}</td>
+                    <td>
+                      {payment.month}/{payment.year}
+                    </td>
                     <td>{formatCurrency(payment.amount)}</td>
-                    <td className="text-danger">{formatCurrency(payment.amount * 0.15)}</td>
-                    <td className="text-success">{formatCurrency(payment.amount * 0.85)}</td>
+                    <td className="text-danger">
+                      {formatCurrency(payment.amount * 0.15)}
+                    </td>
+                    <td className="text-success">
+                      {formatCurrency(payment.amount * 0.85)}
+                    </td>
                     <td>
                       <span
-                        className={`badge ${payment.status === "COMPLETED"
-                          ? "bg-success"
-                          : payment.status === "PENDING"
+                        className={`badge ${
+                          payment.status === "COMPLETED"
+                            ? "bg-success"
+                            : payment.status === "PENDING"
                             ? "bg-warning"
                             : payment.status === "CANCELLED"
-                              ? "bg-danger"
-                              : "bg-info"
-                          }`}
+                            ? "bg-danger"
+                            : "bg-info"
+                        }`}
                       >
                         {payment.status}
                       </span>
                     </td>
-                    <td>{payment.paymentDate ? Utils.getDate(payment.paymentDate) : ""}</td>
+                    <td>
+                      {payment.paymentDate
+                        ? Utils.getDate(payment.paymentDate)
+                        : ""}
+                    </td>
                   </tr>
                 ))
               ) : (
@@ -570,7 +667,7 @@ const Transaction = () => {
             </tbody>
           </Table>
         </Card.Body>
-      </Card> */}
+      </Card>
 
       <TransactionDetail
         show={showModal}

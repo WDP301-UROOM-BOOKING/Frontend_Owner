@@ -22,7 +22,7 @@ const expireConfig = {
 const persistConfig = {
   key: 'root',
   storage,
-  whitelist: ['Auth', 'Hotel', 'Hotelservices', 'Reservation', 'MonthlyPayment', 'ReportedFeedback', 'Feedback'], 
+  whitelist: ['Auth', 'Hotel', 'Hotelservices', 'Reservation', 'MonthlyPayment', 'ReportedFeedback', 'Feedback', 'Room'], 
   transforms: [
     expireReducer('Search', expireConfig),
     expireReducer('Hotel', expireConfig),

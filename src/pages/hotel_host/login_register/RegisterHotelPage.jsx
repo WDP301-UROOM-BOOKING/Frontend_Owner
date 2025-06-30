@@ -15,10 +15,10 @@ const RegisterPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
-    name: "Lê Kim Hoàng Nguyên",
-    phone: "0934726073",
-    email: "lkhnguyen3006@gmail.com",
-    password: "12345678",
+    name: "",
+    phone: "",
+    email: "",
+    password: "",
     rememberMe: false,
   });
 
@@ -35,34 +35,34 @@ const RegisterPage = () => {
     
     // Validate name
     if (!formData.name.trim()) {
-      showToast.error("Username is required");
+      showToast.error("Tên người dùng là bắt buộc");
       isValid = false;
     }
     
     // Validate phone
     if (!formData.phone.trim()) {
-      showToast.error("Phone number is required");
+      showToast.error("Số điện thoại là bắt buộc");
       isValid = false;
     } else if (!/^\d{9,12}$/.test(formData.phone.trim())) {
-      showToast.error("Please enter a valid phone number (9-12 digits)");
+      showToast.error("Vui lòng nhập số điện thoại hợp lệ (9-12 chữ số)");
       isValid = false;
     }
     
     // Validate email
     if (!formData.email.trim()) {
-      showToast.error("Email is required");
+      showToast.error("Email là bắt buộc");
       isValid = false;
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      showToast.error("Please enter a valid email address");
+      showToast.error("Vui lòng nhập địa chỉ email hợp lệ");
       isValid = false;
     }
     
     // Validate password
     if (!formData.password) {
-      showToast.error("Password is required");
+      showToast.error("Mật khẩu là bắt buộc");
       isValid = false;
     } else if (formData.password.length < 8) {
-      showToast.error("Password must be at least 8 characters");
+      showToast.error("Mật khẩu phải có ít nhất 8 ký tự");
       isValid = false;
     }
     
@@ -86,10 +86,10 @@ const RegisterPage = () => {
         onSuccess: (Data) => {
           console.log('abc');
           setIsLoading(false);
-          showToast.success("Register successfully");
+          showToast.success("Đăng ký thành công");
           navigate(Routers.VerifyCodeRegisterPage, {
             state: {
-              message: "Code is sent in your email, verify in here!",
+              message: "Mã xác thực đã được gửi đến email của bạn, vui lòng xác thực tại đây!",
               email: formData.email
             },
           });
@@ -100,7 +100,7 @@ const RegisterPage = () => {
         },
         onError: (error) => {
           setIsLoading(false);
-          showToast.error("Register failed", error.message);
+          showToast.error("Đăng ký thất bại", error.message);
         },
       },
     });
@@ -123,14 +123,14 @@ const RegisterPage = () => {
         <ToastProvider />
         <Card className="mx-auto shadow" style={{ maxWidth: "800px" }}>
           <Card.Body className="p-4 p-md-5">
-            <h2 className="text-center mb-4">Register Account</h2>
+            <h2 className="text-center mb-4">Đăng Ký Tài Khoản</h2>
 
             <Form onSubmit={handleSubmit}>
               <Form.Group className="mb-4">
-                <Form.Label style={{ fontWeight: 500 }}>Username</Form.Label>
+                <Form.Label style={{ fontWeight: 500 }}>Tên người dùng</Form.Label>
                 <Form.Control
                   type="text"
-                  placeholder="Enter your username"
+                  placeholder="Nhập tên người dùng của bạn"
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
@@ -139,10 +139,10 @@ const RegisterPage = () => {
               </Form.Group>
 
               <Form.Group className="mb-4">
-                <Form.Label style={{ fontWeight: 500 }}>Phone </Form.Label>
+                <Form.Label style={{ fontWeight: 500 }}>Số điện thoại</Form.Label>
                 <Form.Control
                   type="text"
-                  placeholder="Enter your phone number"
+                  placeholder="Nhập số điện thoại của bạn"
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
@@ -154,7 +154,7 @@ const RegisterPage = () => {
                 <Form.Label style={{ fontWeight: 500 }}>Email</Form.Label>
                 <Form.Control
                   type="email"
-                  placeholder="Enter your email"
+                  placeholder="Nhập email của bạn"
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
@@ -163,11 +163,11 @@ const RegisterPage = () => {
               </Form.Group>
 
               <Form.Group className="mb-3">
-                <Form.Label style={{ fontWeight: 500 }}>Password</Form.Label>
+                <Form.Label style={{ fontWeight: 500 }}>Mật khẩu</Form.Label>
                 <div className="position-relative">
                   <Form.Control
                     type={showPassword ? "text" : "password"}
-                    placeholder="Enter your password"
+                    placeholder="Nhập mật khẩu của bạn"
                     name="password"
                     value={formData.password}
                     onChange={handleChange}
@@ -199,21 +199,21 @@ const RegisterPage = () => {
                       aria-hidden="true"
                       className="me-2"
                     />
-                    Processing...
+                    Đang xử lý...
                   </>
                 ) : (
-                  "Register Account"
+                  "Đăng Ký Tài Khoản"
                 )}
               </Button>
 
               <div className="text-center">
-                <span className="text-muted">You have a account? </span>
+                <span className="text-muted">Bạn đã có tài khoản? </span>
                 <a
                   onClick={() => {
                     navigate(Routers.LoginHotelPage, { state: { from: "register" } })
                   }}
                   className="text-decoration-none">
-                  Sign in here
+                  Đăng nhập tại đây
                 </a>
               </div>
             </Form>

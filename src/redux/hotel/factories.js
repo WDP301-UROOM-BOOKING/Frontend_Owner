@@ -47,8 +47,9 @@ const Factories = {
     });
   },
 
-  createHotel: (createHotel) => {
-    return api.post(ApiConstants.CREATE_HOTEL, createHotel);
+
+  createHotel: (createHotel, createRoomList, createService) => {
+    return api.post(ApiConstants.CREATE_HOTEL, { createHotel, createRoomList, createService });
   },
   // Hotel Image APIs
   uploadHotelImages: (formData) => {
@@ -63,6 +64,9 @@ const Factories = {
     return api.delete(ApiConstants.DELETE_HOTEL_IMAGE, {
       data: { imageIds },
     });
+  },
+  create_booking_offline: (params) => {
+    return api.post(ApiConstants.CREATE_BOOKING_OFFLINE, {params});
   },
 };
 

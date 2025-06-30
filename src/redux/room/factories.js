@@ -90,7 +90,23 @@ const Factories = {
       console.error("Error fetching room details:", error);
       throw error;
     }
-  }
+  },
+
+   fetch_room: (hotelId, query) => {
+
+    const params = {
+      checkInDate: '',
+      checkOutDate: '',
+    };
+    if(query.checkoutDate){
+      params.checkOutDate= query.checkoutDate
+    }
+    if(query.checkinDate){
+      params.checkInDate= query.checkinDate
+    }
+    const url = ApiConstants.FETCH_ROOM.replace(":hotelId", hotelId);
+    return api.get(url, {params});  
+  },
 };
 
 export default Factories;

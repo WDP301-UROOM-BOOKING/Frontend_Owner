@@ -28,7 +28,7 @@ import CreateRoom from "@pages/hotel_host/create_hotel/CreateRoom";
 import RoomNamingForm from "@pages/hotel_host/create_hotel/RoomNameForm";
 import PricingSetupForm from "@pages/hotel_host/create_hotel/PricingSetupForm";
 import RoomImageForm from "@pages/hotel_host/create_hotel/RoomImageForm";
-import RoomListingPage from "@pages/hotel_host/create_hotel/RoomListingPage";
+import RoomListingPage from "@pages/room/RoomListingPage";
 import AdditionalServicesPage from "@pages/hotel_host/service/AdditionalServicesPage";
 import DataAnalysisAI from "@pages/hotel_host/AI/DataAnalysisAI";
 import HotelManagement from "@pages/hotel_host/hotel/HotelManagement";
@@ -39,6 +39,7 @@ import { useEffect } from "react";
 import { useAppSelector } from "@redux/store";
 import { useDispatch } from "react-redux";
 import { initializeSocket } from "@redux/socket/socketSlice";
+import CreateService from "@pages/hotel_host/service/CreateService";
 
 function App() {
   useEffect(() => {
@@ -173,6 +174,11 @@ function App() {
         <Route
           path={Routers.MyAccountHotelPage}
           element={<MyAccountHotelPage />}
+        />
+
+        <Route
+          path={Routers.CreateService}
+          element={<CreateService />}
         />
       </Routes>
     </Router>

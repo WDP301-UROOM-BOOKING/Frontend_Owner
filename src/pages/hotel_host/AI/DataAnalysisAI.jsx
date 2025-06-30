@@ -15,7 +15,7 @@ import {
 import RoomAvailabilityCalendar from "@pages/hotel_host/RoomAvailabilityCalendar";
 import Transaction from "@pages/hotel_host/Transaction";
 import AdditionalServicesPage from "../service/AdditionalServicesPage";
-import RoomListingPage from "../create_hotel/RoomListingPage";
+import RoomListingPage from "../../room/RoomListingPage";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min";
@@ -32,6 +32,9 @@ import InsightAiPage from "./InSightAiPage";
 import RevenuePage from "../revenue/RevenuePage";
 import AuthActions from "@redux/auth/actions";
 import { disconnectSocket } from "@redux/socket/socketSlice";
+import { Manager } from "socket.io-client";
+import ManagementBooking from "@pages/management_booking/ManagementBooking";
+import MyReportPage from "../report/MyReportPage";
 
 ChartJS.register(
   CategoryScale,
@@ -168,6 +171,20 @@ function App() {
             <li className="nav-item">
               <a
                 className={`nav-link ${
+                  activeTab === "management_bookings" ? "active" : ""
+                }`}
+                href="#"
+                onClick={() => {
+                  setActiveTab("management_bookings");
+                }}
+              >
+                <i className="bi-clipboard-data" />
+                <span style={{ marginLeft: "10px" }}>Quản lý đặt phòng</span>
+              </a>
+            </li>
+            <li className="nav-item">
+              <a
+                className={`nav-link ${
                   activeTab === "feedbacks" ? "active" : ""
                 }`}
                 href="#"
@@ -189,6 +206,20 @@ function App() {
               >
                 <i className="bi bi-chat-dots nav-icon"></i>
                 <span>Tin nhắn</span>
+              </a>
+            </li>
+            <li className="nav-item">
+              <a
+                className={`nav-link ${
+                  activeTab === "my_report" ? "active" : ""
+                }`}
+                href="#"
+                onClick={() => {
+                  setActiveTab("my_report");
+                }}
+              >
+                <i className="bi bi-exclamation-triangle-fill"></i>
+                <span style={{marginLeft: '5px'}}>Quản lý báo cáo</span>
               </a>
             </li>
             <li className="nav-item">
@@ -362,6 +393,8 @@ function App() {
             )}
 
             {activeTab === "revenue" && <RevenuePage />}
+            {activeTab === "management_bookings" && <ManagementBooking />}
+            {activeTab === "my_report" && <MyReportPage />}
           </div>
         </div>
       </div>

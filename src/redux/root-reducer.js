@@ -9,11 +9,14 @@ import MonthlyPaymentReducer from "./monthlyPayment/reducer";
 import messageReducer from './message/reducer';
 import SocketReducer from './socket/socketSlice';
 import DashboardReducer from './dashboard/reducer';
+import { Room } from '@utils/Routes';
+import roomReducer from './room/reducer';
 
 const rootReducer = combineReducers({
     Auth: AuthReducer,
     Hotel: HotelReducer,
     Hotelservices: HotelservicesReducer,
+    Room: roomReducer,
     Feedback: FeedbackReducer,
     ReportedFeedback: ReportedFeedbackReducer,
     Reservation: ReservationReducer,

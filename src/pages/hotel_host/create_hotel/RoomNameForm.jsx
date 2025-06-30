@@ -1,12 +1,91 @@
-import React, { useState } from "react";
-import { Container, Row, Col, Form, Button, Card, Navbar, ProgressBar } from "react-bootstrap";
+import React, { useState, useEffect } from "react";
+import {
+  Container,
+  Row,
+  Col,
+  Form,
+  Button,
+  Card,
+  Navbar,
+  ProgressBar,
+} from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { useNavigate } from "react-router-dom";
+import RoomActions from "@redux/room/actions";
+import { useDispatch } from "react-redux";
+import { useAppSelector } from "@redux/store";
 
 function RoomNamingForm() {
-  const [roomName, setRoomName] = useState("Phòng Đơn Hạng Bình Dân");
+  const [roomName, setRoomName] = useState("");
+  const [customName, setCustomName] = useState("");
+  const [useCustomName, setUseCustomName] = useState(false);
+  const [errors, setErrors] = useState({});
+  const navigate = useNavigate();
+    const createRoom = useAppSelector(state => state.Room.createRoom);
+  useEffect(() => {
+      // If createRoom data exists, populate formData with it
+      if (createRoom.name !== "") {
+        setUseCustomName(true)
+        setCustomName(createRoom.name);
+      }
+    }, [createRoom]);
+
+  // Room name options
+  const roomNameOptions = [
+    "Phòng Standard",
+    "Phòng Family",
+    "Phòng Deluxe",
+    "Phòng Suite",
+    "Phòng Superior",
+    "Phòng Executive",
+    "Phòng Premium",
+    "Phòng Luxury",
+  ];
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (useCustomName) {
+      if (!customName.trim()) {
+        newErrors.customName = "Tên phòng tùy chỉnh không được để trống";
+      } else if (customName.trim().length < 3) {
+        newErrors.customName = "Tên phòng phải có ít nhất 3 ký tự";
+      } else if (customName.trim().length > 50) {
+        newErrors.customName = "Tên phòng không được vượt quá 50 ký tự";
+      }
+    } else {
+      if (!roomName) {
+        newErrors.roomName = "Vui lòng chọn tên phòng";
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const dispatch = useDispatch();
+  const handleContinue = () => {
+    if (validateForm()) {
+      dispatch({
+        type: RoomActions.SAVE_ROOM_NAME_CREATE,
+        payload: {
+          name: useCustomName ? customName : roomName,
+        },
+      });
+
+      // Navigate to next step
+      navigate("/RoomNamingForm");
+    }
+    if (validateForm()) {
+      navigate("/RoomImageForm");
+    }
+  };
 
   const styles = {
+    bookingApp: {
+      minHeight: "100vh",
+      backgroundColor: "#f8f9fa",
+    },
     container: {
       maxWidth: "1000px",
       margin: "50px auto",
@@ -51,9 +130,6 @@ function RoomNamingForm() {
     bulletPoint: {
       marginBottom: "10px",
     },
-    bulletIcon: {
-      marginRight: "10px",
-    },
     highlightText: {
       color: "#0071c2",
       cursor: "pointer",
@@ -74,18 +150,19 @@ function RoomNamingForm() {
       backgroundColor: "#0071c2",
       border: "none",
     },
-    // Navbar styles
     navbarCustom: {
-        backgroundColor: "#003580",
-        padding: "10px 0",
+      backgroundColor: "#003580",
+      padding: "10px 0",
     },
-    navbarBrand: {
-        color: "#fff",
-        fontWeight: "bold",
+    customNameSection: {
+      marginTop: "15px",
+      padding: "15px",
+      backgroundColor: "#f8f9fa",
+      borderRadius: "5px",
+      border: "1px solid #dee2e6",
     },
   };
-  
-  const navigate= useNavigate();
+
   return (
     <div style={styles.bookingApp}>
       {/* Navigation Bar */}
@@ -126,17 +203,103 @@ function RoomNamingForm() {
               </p>
 
               <Form.Group className="mb-3" style={styles.formSection}>
-                <Form.Label>Tên phòng</Form.Label>
+                <Form.Label>Tên phòng *</Form.Label>
+
+                {/* Standard room names */}
                 <Form.Select
                   value={roomName}
-                  onChange={(e) => setRoomName(e.target.value)}
+                  onChange={(e) => {
+                    setRoomName(e.target.value);
+                    setUseCustomName(false);
+                    if (errors.roomName) {
+                      setErrors((prev) => ({ ...prev, roomName: "" }));
+                    }
+                  }}
+                  isInvalid={!!errors.roomName}
+                  disabled={useCustomName}
                 >
-                  <option>Phòng Standard</option>
-                  <option>Phòng Family</option>
-                  <option>Phòng Deluxe</option>
-                  <option>Phòng Suite</option>
+                  <option value="">Chọn tên phòng</option>
+                  {roomNameOptions.map((name) => (
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
+                  ))}
                 </Form.Select>
+                <Form.Control.Feedback type="invalid">
+                  {errors.roomName}
+                </Form.Control.Feedback>
               </Form.Group>
+
+              {/* Custom name option */}
+              <Form.Group className="mb-3">
+                <Form.Check
+                  type="checkbox"
+                  id="useCustomName"
+                  label="Sử dụng tên phòng tùy chỉnh"
+                  checked={useCustomName}
+                  onChange={(e) => {
+                    setUseCustomName(e.target.checked);
+                    if (!e.target.checked) {
+                      setCustomName("");
+                      if (errors.customName) {
+                        setErrors((prev) => ({ ...prev, customName: "" }));
+                      }
+                    }
+                  }}
+                />
+              </Form.Group>
+
+              {/* Custom name input */}
+              {useCustomName && (
+                <div style={styles.customNameSection}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Tên phòng tùy chỉnh *</Form.Label>
+                    <Form.Control
+                      type="text"
+                      placeholder="Nhập tên phòng tùy chỉnh"
+                      value={customName}
+                      onChange={(e) => {
+                        setCustomName(e.target.value);
+                        if (errors.customName) {
+                          setErrors((prev) => ({ ...prev, customName: "" }));
+                        }
+                      }}
+                      isInvalid={!!errors.customName}
+                      maxLength={50}
+                    />
+                    <Form.Control.Feedback type="invalid">
+                      {errors.customName}
+                    </Form.Control.Feedback>
+                    <Form.Text className="text-muted">
+                      {customName.length}/50 ký tự
+                    </Form.Text>
+                  </Form.Group>
+                  <small className="text-info">
+                    💡 Tên tùy chỉnh sẽ hiển thị trên trang web của bạn
+                  </small>
+                </div>
+              )}
+
+              {/* Preview */}
+              <div
+                className="mt-3 p-3"
+                style={{ backgroundColor: "#e8f4f8", borderRadius: "5px" }}
+              >
+                <small className="text-muted">
+                  <strong>Tên phòng sẽ hiển thị:</strong>
+                </small>
+                <div
+                  style={{
+                    fontSize: "16px",
+                    fontWeight: "bold",
+                    color: "#0071c2",
+                  }}
+                >
+                  {useCustomName
+                    ? customName || "Chưa nhập tên"
+                    : roomName || "Chưa chọn tên"}
+                </div>
+              </div>
             </div>
           </Col>
 
@@ -144,59 +307,60 @@ function RoomNamingForm() {
             <div style={styles.infoCard}>
               <div style={styles.infoHeader}>
                 <div style={styles.infoTitle}>
-                  <span style={styles.lightBulbIcon}>
-                    <i className="fa fa-lightbulb-o" aria-hidden="true">
-                      💡
-                    </i>
-                  </span>
-                  Vì sao tôi không thể sử dụng tên phòng tùy chỉnh?
+                  <span style={styles.lightBulbIcon}>💡</span>
+                  Tên phòng tiêu chuẩn vs tùy chỉnh
                 </div>
-                <button style={styles.closeButton}>×</button>
               </div>
 
-              <p>
-                Tên phòng tiêu chuẩn có nhiều lợi ích mà tên tùy chỉnh không có:
-              </p>
+              <div className="mb-3">
+                <strong>Tên phòng tiêu chuẩn:</strong>
+                <ul style={{ paddingLeft: "20px", marginTop: "10px" }}>
+                  <li style={styles.bulletPoint}>
+                    Cung cấp đầy đủ thông tin hơn
+                  </li>
+                  <li style={styles.bulletPoint}>
+                    Theo hệ thống thống nhất trên trang web
+                  </li>
+                  <li style={styles.bulletPoint}>Dễ hiểu cho khách quốc tế</li>
+                  <li style={styles.bulletPoint}>
+                    Được phiên dịch sang nhiều ngôn ngữ
+                  </li>
+                </ul>
+              </div>
 
-              <ul style={{ paddingLeft: "20px" }}>
-                <li style={styles.bulletPoint}>
-                  Cung cấp đầy đủ thông tin hơn
-                </li>
-                <li style={styles.bulletPoint}>
-                  Theo hệ thống thống nhất trên trang web, cho phép khách nhanh
-                  chóng tìm và so sánh phòng
-                </li>
-                <li style={styles.bulletPoint}>
-                  Dễ hiểu cho dù khách bất kể xuất thân và quốc tịch
-                </li>
-                <li style={styles.bulletPoint}>
-                  Được phiên dịch sang 43 ngôn ngữ
-                </li>
-              </ul>
-
-              <p>
-                Sau khi đăng ký, Quý vị sẽ có lựa chọn để thêm{" "}
-                <span style={styles.highlightText}>tên phòng tùy chỉnh</span>.
-                Với những tên này, khách sẽ không thấy nhưng Quý vị có thể sử
-                dụng để tham khảo nội bộ.
-              </p>
+              <div>
+                <strong>Tên phòng tùy chỉnh:</strong>
+                <ul style={{ paddingLeft: "20px", marginTop: "10px" }}>
+                  <li style={styles.bulletPoint}>
+                    Thể hiện cá tính riêng của khách sạn
+                  </li>
+                  <li style={styles.bulletPoint}>
+                    Tạo ấn tượng đặc biệt với khách
+                  </li>
+                  <li style={styles.bulletPoint}>
+                    Linh hoạt trong cách đặt tên
+                  </li>
+                  <li style={styles.bulletPoint}>
+                    Phù hợp với thương hiệu của bạn
+                  </li>
+                </ul>
+              </div>
             </div>
           </Col>
         </Row>
 
         <div style={styles.buttonContainer}>
-          <Button 
+          <Button
             style={styles.backButton}
             onClick={() => {
               navigate("/CreateRoom");
             }}
-            >←</Button>
-          <Button 
-            style={styles.continueButton}
-            onClick={() =>{
-              navigate('/PricingSetupForm')
-            }}
-          >Tiếp tục</Button>
+          >
+            ←
+          </Button>
+          <Button style={styles.continueButton} onClick={handleContinue}>
+            Tiếp tục
+          </Button>
         </div>
       </Container>
     </div>

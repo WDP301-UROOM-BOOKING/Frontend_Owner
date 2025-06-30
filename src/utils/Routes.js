@@ -34,8 +34,11 @@ const AdditionalServicesPage = '/AdditionalServicesPage';
 const Room= '/Room';
 const HotelManagement= '/HotelManagement';
 const VerifyCodeRegisterPage= '/verify_regiter';
+const CreateService = '/CreateService';
 
 export {
+  // Common
+  CreateService,
   BannedPage,
   ErrorPage,
   WaitPendingPage,

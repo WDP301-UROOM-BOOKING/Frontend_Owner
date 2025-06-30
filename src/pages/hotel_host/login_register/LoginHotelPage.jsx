@@ -21,8 +21,8 @@ const LoginHotelPage = () => {
   const [isResending, setIsResending] = useState(false);
   const [unverifiedEmail, setUnverifiedEmail] = useState("");
   const [formData, setFormData] = useState({
-    email: "hot1@gm.com",
-    password: "12345678",
+    email: "",
+    password: "",
     rememberMe: false,
   });
 
@@ -43,21 +43,19 @@ const LoginHotelPage = () => {
     });
   };
 
-  
-
   const handleSubmit = (e) => {
     e.preventDefault();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const passwordRegex = /^.{6,}$/; // tối thiểu 6 ký tự
     if (!formData.email || !formData.password) {
       showToast.warning(
-        "Email and password is required. Please fill in completely !"
+        "Email và mật khẩu là bắt buộc. Vui lòng điền đầy đủ thông tin!"
       );
     } else if (!emailRegex.test(formData.email)) {
-      showToast.warning("Invalid email format. Enter email again !!!");
+      showToast.warning("Định dạng email không hợp lệ. Vui lòng nhập lại email!");
     } else if (!passwordRegex.test(formData.password)) {
       showToast.warning(
-        "Password must be at least 8 characters.  Enter password again !!!"
+        "Mật khẩu phải có ít nhất 8 ký tự. Vui lòng nhập lại mật khẩu!"
       );
     } else {
       setIsLoading(true);
@@ -93,13 +91,13 @@ const LoginHotelPage = () => {
               setUnverifiedEmail(formData.email);
               setShowVerifyModal(true);
             } else {
-              showToast.warning("Email or password is not correct");
+              showToast.warning("Email hoặc mật khẩu không chính xác");
               setFormData({ ...formData, password: "" });
             }
           },
           onError: (error) => {
             setIsLoading(false);
-            showToast.error("Email or password is not correct");
+            showToast.error("Email hoặc mật khẩu không chính xác");
           },
         },
       });
@@ -123,14 +121,14 @@ const LoginHotelPage = () => {
         <ToastProvider />
         <Card className="mx-auto shadow" style={{ maxWidth: "800px" }}>
           <Card.Body className="p-4 p-md-5">
-            <h2 className="text-center mb-4">Login Account</h2>
+            <h2 className="text-center mb-4">Đăng Nhập Tài Khoản</h2>
 
             <Form onSubmit={handleSubmit}>
               <Form.Group className="mb-4">
                 <Form.Label style={{ fontWeight: 500 }}>Email</Form.Label>
                 <Form.Control
                   type="text"
-                  placeholder="Enter your email"
+                  placeholder="Nhập email của bạn"
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
@@ -140,11 +138,11 @@ const LoginHotelPage = () => {
               </Form.Group>
 
               <Form.Group className="mb-3">
-                <Form.Label style={{ fontWeight: 500 }}>Password</Form.Label>
+                <Form.Label style={{ fontWeight: 500 }}>Mật khẩu</Form.Label>
                 <div className="position-relative">
                   <Form.Control
                     type={showPassword ? "text" : "password"}
-                    placeholder="Enter your password"
+                    placeholder="Nhập mật khẩu của bạn"
                     name="password"
                     value={formData.password}
                     onChange={handleChange}
@@ -165,7 +163,7 @@ const LoginHotelPage = () => {
               <div className="d-flex justify-content-between mb-4">
                 <Form.Check
                   type="checkbox"
-                  label="Remember me"
+                  label="Ghi nhớ đăng nhập"
                   name="rememberMe"
                   checked={formData.rememberMe}
                   onChange={handleChange}
@@ -175,7 +173,7 @@ const LoginHotelPage = () => {
                   href={Routers.ForgetPasswordHotelPage}
                   className="text-decoration-none"
                 >
-                  Forgot Password?
+                  Quên mật khẩu?
                 </a>
               </div>
 
@@ -188,7 +186,7 @@ const LoginHotelPage = () => {
                   alt="Google"
                   style={{ width: "20px", marginRight: "10px" }}
                 />
-                Continue with Google
+                Tiếp tục với Google
               </Button>
 
               <Button
@@ -207,20 +205,20 @@ const LoginHotelPage = () => {
                       aria-hidden="true"
                       className="me-2"
                     />
-                    Logging in...
+                    Đang đăng nhập...
                   </>
                 ) : (
-                  "Login Account"
+                  "Đăng Nhập"
                 )}
               </Button>
 
               <div className="text-center">
-                <span className="text-muted">Not a member? </span>
+                <span className="text-muted">Chưa có tài khoản? </span>
                 <a
                   href={Routers.RegisterHotelPage} 
                   className="text-decoration-none"
                 >
-                  Register now
+                  Đăng ký ngay
                 </a>
               </div>
             </Form>
@@ -235,17 +233,16 @@ const LoginHotelPage = () => {
         centered
       >
         <Modal.Header closeButton>
-          <Modal.Title>Account Not Verified</Modal.Title>
+          <Modal.Title>Tài Khoản Chưa Được Xác Thực</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <p>
-            Your account hasn't been verified yet. Would you like to receive a
-            new verification code?
+            Tài khoản của bạn chưa được xác thực. Bạn có muốn nhận mã xác thực mới không?
           </p>
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setShowVerifyModal(false)}>
-            Cancel
+            Hủy
           </Button>
           <Button
             variant="primary"
@@ -261,10 +258,10 @@ const LoginHotelPage = () => {
                   aria-hidden="true"
                   className="me-2"
                 />
-                Sending...
+                Đang gửi...
               </>
             ) : (
-              "Send Verification Code"
+              "Gửi Mã Xác Thực"
             )}
           </Button>
         </Modal.Footer>
