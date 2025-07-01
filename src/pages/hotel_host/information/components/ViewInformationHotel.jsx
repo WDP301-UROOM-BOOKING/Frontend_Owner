@@ -9,6 +9,7 @@ import AuthActions from "../../../../redux/auth/actions";
 import Utils from "@utils/Utils";
 import "react-datepicker/dist/react-datepicker.css";
 import { getToken } from "@utils/handleToken";
+
 const ViewInformation = () => {
   const dispatch = useDispatch();
   const Auth = useAppSelector((state) => state.Auth.Auth);
@@ -17,6 +18,7 @@ const ViewInformation = () => {
   const [showAcceptModal, setShowAcceptModal] = useState(false);
 
   console.log("formData: ", formData);
+  
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({
@@ -41,16 +43,16 @@ const ViewInformation = () => {
       payload: {
         data: formData,
         onSuccess: (user) => {
-          showToast.success("Update Information Successfully!");
+          showToast.success("Cập nhật thông tin thành công!");
           setFormData({ ...user });
           setShowAcceptModal(false);
         },
         onFailed: (msg) => {
-          showToast.warning(`Update failed: ${msg}`);
+          showToast.warning(`Cập nhật thất bại: ${msg}`);
           setShowAcceptModal(false);
         },
         onError: (err) => {
-          showToast.warning("Something went wrong!");
+          showToast.warning("Đã xảy ra lỗi!");
           console.error(err);
           setShowAcceptModal(false);
         },
@@ -60,15 +62,15 @@ const ViewInformation = () => {
 
   return (
     <Card.Body>
-      <h2 className="fw-bold mb-4">View Information</h2>
+      <h2 className="fw-bold mb-4">Xem Thông Tin</h2>
       <Form onSubmit={handleSubmit}>
         <Row className="mb-3">
           <Col md={6}>
             <Form.Group>
-              <Form.Label>Full name</Form.Label>
+              <Form.Label>Họ và tên</Form.Label>
               <Form.Control
                 type="text"
-                placeholder="Enter your full name in here"
+                placeholder="Nhập họ và tên của bạn"
                 name="name"
                 value={formData.name}
                 onChange={handleInputChange}
@@ -77,12 +79,12 @@ const ViewInformation = () => {
           </Col>
           <Col md={6}>
             <Form.Group>
-              <Form.Label>Gender</Form.Label>
+              <Form.Label>Giới tính</Form.Label>
               <div>
                 <Form.Check
                   inline
                   type="radio"
-                  label="Male"
+                  label="Nam"
                   name="gender"
                   id="MALE"
                   value="MALE"
@@ -92,7 +94,7 @@ const ViewInformation = () => {
                 <Form.Check
                   inline
                   type="radio"
-                  label="Female"
+                  label="Nữ"
                   name="gender"
                   id="FEMALE"
                   value="FEMALE"
@@ -106,7 +108,7 @@ const ViewInformation = () => {
         <Row className="mb-3">
           <Col md={6}>
             <Form.Group>
-              <Form.Label>Birthdate</Form.Label>
+              <Form.Label>Ngày sinh</Form.Label>
               <InputGroup>
                 <Form.Control
                   type="date"
@@ -124,10 +126,10 @@ const ViewInformation = () => {
           </Col>
           <Col md={6}>
             <Form.Group>
-              <Form.Label>CMND</Form.Label>
+              <Form.Label>CMND/CCCD</Form.Label>
               <Form.Control
                 type="text"
-                placeholder="Enter your CMND in here"
+                placeholder="Nhập số CMND/CCCD của bạn"
                 name="cmnd"
                 value={formData.cmnd}
                 onChange={handleInputChange}
@@ -138,10 +140,10 @@ const ViewInformation = () => {
         <Row className="mb-3">
           <Col md={6}>
             <Form.Group>
-              <Form.Label>Number phone</Form.Label>
+              <Form.Label>Số điện thoại</Form.Label>
               <Form.Control
                 type="text"
-                placeholder="Enter your number phone in here"
+                placeholder="Nhập số điện thoại của bạn"
                 name="phoneNumber"
                 value={formData.phoneNumber}
                 onChange={handleInputChange}
@@ -153,7 +155,7 @@ const ViewInformation = () => {
               <Form.Label>Email</Form.Label>
               <Form.Control
                 type="text"
-                placeholder="Enter your email here"
+                placeholder="Nhập email của bạn"
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
@@ -166,11 +168,11 @@ const ViewInformation = () => {
         <Row className="mb-4">
           <Col>
             <Form.Group>
-              <Form.Label>Address</Form.Label>
+              <Form.Label>Địa chỉ</Form.Label>
               <Form.Control
                 as="textarea"
                 rows={3}
-                placeholder="Enter your address in here"
+                placeholder="Nhập địa chỉ của bạn"
                 name="address"
                 value={formData.address}
                 onChange={handleInputChange}
@@ -187,7 +189,7 @@ const ViewInformation = () => {
               setShowUpdateModal(true);
             }}
           >
-            CANCEL
+            HỦY BỎ
           </Button>
           <Button
             variant="primary"
@@ -197,7 +199,7 @@ const ViewInformation = () => {
               setShowAcceptModal(true);
             }}
           >
-            SAVE
+            LƯU
           </Button>
         </div>
       </Form>
@@ -207,9 +209,9 @@ const ViewInformation = () => {
         show={showUpdateModal}
         onHide={() => setShowUpdateModal(false)}
         onConfirm={handleCancel}
-        title="Confirm Cancel"
-        message="Are you sure you want to reset this information ?"
-        confirmButtonText="Confirm"
+        title="Xác nhận hủy bỏ"
+        message="Bạn có chắc chắn muốn khôi phục lại thông tin này không?"
+        confirmButtonText="Xác nhận"
         type="warning"
       />
 
@@ -218,9 +220,9 @@ const ViewInformation = () => {
         show={showAcceptModal}
         onHide={() => setShowAcceptModal(false)}
         onConfirm={handleSave}
-        title="Confirm Update"
-        message="Are you sure you want to update this new information?"
-        confirmButtonText="Accept"
+        title="Xác nhận cập nhật"
+        message="Bạn có chắc chắn muốn cập nhật thông tin mới này không?"
+        confirmButtonText="Đồng ý"
         type="accept"
       />
 

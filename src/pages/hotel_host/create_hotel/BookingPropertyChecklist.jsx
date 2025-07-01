@@ -67,7 +67,7 @@ function BookingPropertyChecklist() {
 
   const roomTypes = [
     "Single Room",
-    "Double Room", 
+    "Double Room",
     "Family Room",
     "Suite",
     "VIP Room",
@@ -82,7 +82,7 @@ function BookingPropertyChecklist() {
     });
     setShowServiceModal(true);
   };
-  
+
   const handleCreateService = () => {
     setEditingService(null);
     navigate(Routers.CreateService);
@@ -94,13 +94,12 @@ function BookingPropertyChecklist() {
       type: HotelActions.DELETE_SERVICE_CREATE,
       payload: { index },
     });
-
   };
 
   const handleInputChange = (field, value) => {
-    setCurrentService(prev => ({
+    setCurrentService((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
@@ -116,21 +115,25 @@ function BookingPropertyChecklist() {
     const value = e.target.value;
     // Remove all non-digit characters for internal storage
     const numericValue = value.replace(/\D/g, "");
-    setCurrentService(prev => ({
+    setCurrentService((prev) => ({
       ...prev,
-      price: numericValue
+      price: numericValue,
     }));
   };
 
   const handleSaveService = () => {
     // Validate required fields
-    if (!currentService.name || !currentService.description || !currentService.price) {
+    if (
+      !currentService.name ||
+      !currentService.description ||
+      !currentService.price
+    ) {
       return;
     }
 
     const serviceData = {
       ...currentService,
-      price: parseInt(currentService.price.replace(/\D/g, "")) || 0
+      price: parseInt(currentService.price.replace(/\D/g, "")) || 0,
     };
 
     if (editingService !== null) {
@@ -149,7 +152,7 @@ function BookingPropertyChecklist() {
         payload: serviceData,
       });
     }
-    
+
     setShowServiceModal(false);
     setEditingService(null);
     setCurrentService({
@@ -173,7 +176,9 @@ function BookingPropertyChecklist() {
   const handleSaveRoom = (roomData) => {
     if (editingRoom) {
       // Update existing room
-      const roomIndex = createRoomList.findIndex(room => room === editingRoom);
+      const roomIndex = createRoomList.findIndex(
+        (room) => room === editingRoom
+      );
       dispatch({
         type: RoomActions.EDIT_ROOM_IN_CREATE_LIST,
         payload: {
@@ -325,9 +330,9 @@ function BookingPropertyChecklist() {
                   * Có thể thêm sau đó
                 </span>
               </div>
-              <ToastProvider/>
+              <ToastProvider />
               {/* Room List */}
-              {createRoomList.length > 0 && (
+              {Array.isArray(createRoomList) && createRoomList.length > 0 && (
                 <div style={{ marginTop: "15px" }}>
                   <h6>Danh sách phòng đã tạo:</h6>
                   <Row>
@@ -345,22 +350,31 @@ function BookingPropertyChecklist() {
                             </div>
                             <Row className="mb-2">
                               <Col md={6}>
-                                <small><b>Sức chứa:</b> {room.capacity} người</small>
+                                <small>
+                                  <b>Sức chứa:</b> {room.capacity} người
+                                </small>
                               </Col>
                               <Col md={6}>
-                                <small><b>Số lượng:</b> {room.quantity} phòng</small>
+                                <small>
+                                  <b>Số lượng:</b> {room.quantity} phòng
+                                </small>
                               </Col>
                             </Row>
                             <p>
                               <b>Mô tả: </b>
-                              {room.description.length > 100 
-                                ? `${room.description.substring(0, 100)}...` 
+                              {room.description.length > 100
+                                ? `${room.description.substring(0, 100)}...`
                                 : room.description}
                             </p>
                             {room.facilities && room.facilities.length > 0 && (
                               <div className="mb-2">
-                                <small><b>Tiện nghi:</b> {room.facilities.slice(0, 3).join(", ")}
-                                  {room.facilities.length > 3 && ` và ${room.facilities.length - 3} tiện nghi khác`}
+                                <small>
+                                  <b>Tiện nghi:</b>{" "}
+                                  {room.facilities.slice(0, 3).join(", ")}
+                                  {room.facilities.length > 3 &&
+                                    ` và ${
+                                      room.facilities.length - 3
+                                    } tiện nghi khác`}
                                 </small>
                               </div>
                             )}
@@ -390,10 +404,7 @@ function BookingPropertyChecklist() {
               )}
             </Col>
             <Col xs="auto">
-              <Button
-                style={styles.actionButton}
-                onClick={handleCreateRoom}
-              >
+              <Button style={styles.actionButton} onClick={handleCreateRoom}>
                 + Thêm phòng
               </Button>
             </Col>
@@ -427,7 +438,7 @@ function BookingPropertyChecklist() {
               </div>
 
               {/* Service List */}
-              {createService.length > 0 && (
+              {Array.isArray(createService) && createService.length > 0 && (
                 <div style={{ marginTop: "15px" }}>
                   <h6>Danh sách dịch vụ đã tạo:</h6>
                   <Row>
@@ -596,7 +607,7 @@ function BookingPropertyChecklist() {
         </Modal>
 
         {/* Room Modal */}
-        <Room 
+        <Room
           show={showRoomModal}
           handleClose={() => setShowRoomModal(false)}
           onSave={handleSaveRoom}

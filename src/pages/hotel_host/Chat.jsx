@@ -49,8 +49,8 @@ function Chat() {
             return prevSelectedUser;
           });
         },
-        onFailed: (msg) => console.error("Failed to fetch rooms:", msg),
-        onError: (err) => console.error("Server error:", err),
+        onFailed: (msg) => console.error("Không thể tải danh sách người dùng:", msg),
+        onError: (err) => console.error("Lỗi máy chủ:", err),
       },
     });
   };
@@ -65,8 +65,8 @@ function Chat() {
             setUserMessages(messages);
             setIsReadLast(messages[messages.length - 1].isRead);
           },
-          onFailed: (msg) => console.error("Failed to fetch rooms:", msg),
-          onError: (err) => console.error("Server error:", err),
+          onFailed: (msg) => console.error("Không thể tải lịch sử tin nhắn:", msg),
+          onError: (err) => console.error("Lỗi máy chủ:", err),
         },
       });
     }
@@ -212,7 +212,7 @@ function Chat() {
       {(showSidebar || !isMobile()) && (
         <div style={styles.sidebar}>
           <div style={styles.sidebarHeader}>
-            <h5 style={styles.sidebarTitle}>Chat Box</h5>
+            <h5 style={styles.sidebarTitle}>Hộp Trò Chuyện</h5>
             <div style={styles.search}>
               <i style={styles.searchIcon} className="bi bi-search"></i>
               <input
@@ -279,8 +279,7 @@ function Chat() {
                             : "normal",
                       }}
                     >
-                      {" "}
-                      {user.isLastMessageFromMe && "You: "}
+                      {user.isLastMessageFromMe && "Bạn: "}
                       {user.lastMessage}
                     </div>
                   </div>
@@ -332,14 +331,13 @@ function Chat() {
               </div>
               <div>
                 <h5 style={{ margin: 0 }}>
-                  {" "}
                   {selectedUser?.role === "OWNER"
                     ? selectedUser?.ownedHotels[0]?.hotelName ??
                       selectedUser?.name
                     : selectedUser?.name}
                 </h5>
                 <small style={{ color: "#6c757d" }}>
-                  Last seen a few minutes ago
+                  Hoạt động cách đây vài phút
                 </small>
               </div>
             </div>
@@ -431,7 +429,7 @@ function Chat() {
                       <div style={styles.messageStatus}>
                         {message.isRead ? (
                           <>
-                            Seen{" "}
+                            Đã xem{" "}
                             <i
                               className="bi bi-check-all"
                               style={styles.messageStatusIcon}
@@ -439,7 +437,7 @@ function Chat() {
                           </>
                         ) : (
                           <>
-                            Sent{" "}
+                            Đã gửi{" "}
                             <i
                               className="bi bi-check"
                               style={styles.messageStatusIcon}
@@ -454,9 +452,9 @@ function Chat() {
           ) : (
             <div style={styles.emptyState}>
               <i style={styles.emptyStateIcon} className="bi bi-chat-dots"></i>
-              <h3 style={styles.emptyStateTitle}>No have message</h3>
+              <h3 style={styles.emptyStateTitle}>Chưa có tin nhắn</h3>
               <p style={styles.emptyStateText}>
-                Start the conversation by sending the first message.
+                Bắt đầu cuộc trò chuyện bằng cách gửi tin nhắn đầu tiên.
               </p>
             </div>
           )}

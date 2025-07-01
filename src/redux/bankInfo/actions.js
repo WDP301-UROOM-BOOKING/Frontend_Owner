@@ -1,0 +1,8 @@
+const BankInfoActions = {
+  SAVE_BANK_INFO: "SAVE_BANK_INFO",
+  UPDATE_BANK_INFO: "UPDATE_BANK_INFO", 
+  DELETE_BANK_INFO: "DELETE_BANK_INFO",
+  SET_SHOW_FORM: "SET_SHOW_FORM",
+};
+
+export default BankInfoActions;

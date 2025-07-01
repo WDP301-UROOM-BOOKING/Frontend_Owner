@@ -5,39 +5,37 @@
 }
 
 .calendar-grid {
-  /* display: table; */
+  display: grid;
+  grid-template-columns: 200px repeat(14, 1fr); /* 200px cho cột phòng, các cột ngày chia đều */
+  gap: 1px;
+  background-color: #dee2e6;
+  min-width: 1200px;
   width: 100%;
-  border-collapse: collapse;
-  min-width: 1000px;
-  display: flex;
-  flex-direction: column;
-  /* min-width: 700px; */
 }
 
 .calendar-header,
 .calendar-row {
-  display: table-row;
+  display: contents; /* Để các cell con hiển thị như grid items */
 }
 
 .calendar-cell {
-  display: table-cell;
-  border: 1px solid #dee2e6;
+  background-color: white;
+  border: none;
   padding: 8px;
-  vertical-align: middle;
-  min-width: 100px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 80px;
+  overflow: hidden;
 }
 
 .room-header {
-  /* background-color: #f8f9fa; */
+  background-color: #f8f9fa;
   font-weight: bold;
   text-align: center;
-  min-width: 150px;
-}
-
-.room-actions {
-  font-size: 0.7rem;
-  color: #6c757d;
-  margin-top: 5px;
+  justify-content: center;
+  align-items: center;
 }
 
 .date-header {
@@ -51,61 +49,51 @@
   background-color: #e9ecef;
 }
 
-.day-of-week {
-  font-size: 0.8rem;
-  color: #6c757d;
-}
-
-.date {
-  font-size: 0.9rem;
-}
-
 .room-info {
   background-color: #f8f9fa;
-  min-width: 180px;
   position: relative;
-}
-
-.room-header-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.room-menu-toggle {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.75rem;
-}
-
-.room-number {
-  font-weight: bold;
-  font-size: 1.1rem;
-}
-
-.room-type {
-  margin: 5px 0;
-}
-
-.room-capacity {
-  font-size: 0.8rem;
-  color: #6c757d;
-  margin-bottom: 3px;
-}
-
-.room-price {
-  font-size: 0.8rem;
-  color: #198754;
-  font-weight: bold;
+  text-align: center;
+  padding: 10px 5px;
 }
 
 .date-cell {
   text-align: center;
   cursor: pointer;
-  height: 80px;
   transition: all 0.2s;
   position: relative;
 }
 
+.booking-info {
+  font-size: 0.75rem;
+  line-height: 1.2;
+  position: relative;
+  width: 100%;
+  text-align: center;
+}
+
+.guest-name {
+  font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* Responsive cho mobile */
+@media (max-width: 768px) {
+  .calendar-grid {
+    grid-template-columns: 150px repeat(14, minmax(80px, 1fr));
+    min-width: 1000px;
+  }
+  
+  .calendar-cell {
+    padding: 4px;
+    min-height: 60px;
+    font-size: 0.75rem;
+  }
+}
+
+/* Các class khác giữ nguyên */
 .date-cell:hover {
   background-color: rgba(0, 123, 255, 0.1);
 }
@@ -138,19 +126,6 @@
   background-color: rgba(255, 193, 7, 0.2);
 }
 
-.booking-info {
-  font-size: 0.8rem;
-  line-height: 1.2;
-  position: relative;
-}
-
-.guest-name {
-  font-weight: bold;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 .status-icon {
   position: absolute;
   top: 5px;
@@ -171,25 +146,6 @@
   font-size: 0.7rem;
   padding: 2px 5px;
   width: 100%;
-}
-
-.check-in-badge,
-.check-out-badge {
-  font-size: 0.7rem;
-  padding: 1px 4px;
-  border-radius: 3px;
-  margin-top: 2px;
-  display: inline-block;
-}
-
-.check-in-badge {
-  background-color: #28a745;
-  color: white;
-}
-
-.check-out-badge {
-  background-color: #dc3545;
-  color: white;
 }
 
 .available-cell {
@@ -264,12 +220,6 @@
 .availability-summary {
   border-radius: 0.5rem;
 
-}
-
-@media (max-width: 768px) {
-  .calendar-filters .row > div {
-    margin-bottom: 1rem;
-  }
 }
 
 

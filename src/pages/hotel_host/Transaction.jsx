@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Row,
   Col,
@@ -19,11 +19,21 @@ import { useDispatch, useSelector } from "react-redux";
 import ReservationActions from "../../redux/reservation/actions";
 import MonthlyPaymentActions from "@redux/monthlyPayment/actions";
 import Utils from "@utils/Utils";
+import { useAppDispatch, useAppSelector } from "../../redux/store";
+import BankInfoActions from "../../redux/bankInfo/actions";
+import { trackSynchronousRequestDataAccessInDev } from "next/dist/server/app-render/dynamic-rendering";
 
 const Transaction = () => {
-  const dispatch = useDispatch();
-  const { reservations } = useSelector((state) => state.Reservation);
-  const { list } = useSelector((state) => state.MonthlyPayment);
+  const navigate = useNavigate();
+  const [showModal, setShowModal] = useState(false);
+  const dispatch = useAppDispatch(); // Sử dụng useAppDispatch thay vì useDispatch
+  
+  // Sử dụng useAppSelector cho tất cả
+  const { reservations } = useAppSelector((state) => state.Reservation);
+  const { list } = useAppSelector((state) => state.MonthlyPayment);
+  const { bankInfo, hasBankInfo, showForm } = useAppSelector(
+    (state) => state.BankInfo
+  );
   const [selectedAdminYear, setSelectedAdminYear] = useState(
     new Date().getFullYear()
   );
@@ -38,21 +48,23 @@ const Transaction = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  // Trạng thái thông tin ngân hàng
-  const [hasBankInfo, setHasBankInfo] = useState(false);
-  const [bankInfo, setBankInfo] = useState({
+  // Local state cho form
+  const [bankInfoForm, setBankInfoForm] = useState({
     accountNumber: "",
     accountName: "",
     bankName: "",
     branch: "",
   });
-  const [savedBankInfo, setSavedBankInfo] = useState(null);
-  const [showForm, setShowForm] = useState(true);
 
-  const [showModal, setShowModal] = useState(false);
-
+  // Sync form với Redux state khi có bankInfo
   useEffect(() => {
-    // Gọi API lấy reservation theo filter, sort, month, year
+    if (bankInfo) {
+      setBankInfoForm(bankInfo);
+    }
+  }, [bankInfo]);
+
+  // Gọi API lấy reservation theo filter, sort, month, year
+  useEffect(() => {
     dispatch({
       type: ReservationActions.FETCH_RESERVATIONS,
       payload: {
@@ -74,24 +86,74 @@ const Transaction = () => {
 
   const handleBankInfoChange = (e) => {
     const { name, value } = e.target;
-    setBankInfo({
-      ...bankInfo,
+    setBankInfoForm({
+      ...bankInfoForm,
       [name]: value,
     });
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log("Thông tin ngân hàng đã gửi:", bankInfo);
-    setSavedBankInfo(bankInfo);
-    setHasBankInfo(true);
-    setShowForm(false);
-    showToast.success("Tạo tài khoản ngân hàng thành công");
+    
+    // Validate form
+    if (!bankInfoForm.accountNumber || !bankInfoForm.accountName || !bankInfoForm.bankName) {
+      showToast.error('Vui lòng điền đầy đủ thông tin!');
+      return;
+    }
+
+    console.log('Current bankInfo state:', bankInfo);
+    console.log('Form data:', bankInfoForm);
+    console.log('hasBankInfo:', hasBankInfo);
+
+    if (hasBankInfo) {
+      dispatch({
+        type: BankInfoActions.UPDATE_BANK_INFO,
+        payload: bankInfoForm,
+      });
+      showToast.success('Cập nhật thông tin ngân hàng thành công!');
+    } else {
+      dispatch({
+        type: BankInfoActions.SAVE_BANK_INFO,
+        payload: bankInfoForm,
+      });
+      showToast.success('Lưu thông tin ngân hàng thành công!');
+    }
   };
 
   const handleEdit = () => {
-    setBankInfo(savedBankInfo);
-    setShowForm(true);
+    setBankInfoForm(bankInfo);
+    dispatch({
+      type: BankInfoActions.SET_SHOW_FORM,
+      payload: true,
+    });
+  };
+
+  const handleDelete = () => {
+    if (true) {
+      dispatch({ type: BankInfoActions.DELETE_BANK_INFO });
+      setBankInfoForm({
+        accountNumber: "",
+        accountName: "",
+        bankName: "",
+        branch: "",
+      });
+      showToast.success('Xoá thông tin ngân hàng thành công!');
+    }
+  };
+
+  const handleCancel = () => {
+    setBankInfoForm(
+      bankInfo || {
+        accountNumber: "",
+        accountName: "",
+        bankName: "",
+        branch: "",
+      }
+    );
+    dispatch({
+      type: BankInfoActions.SET_SHOW_FORM,
+      payload: false,
+    });
   };
 
   const formatCurrency = (amount) => {
@@ -602,6 +664,138 @@ const Transaction = () => {
           </Card>
         </Col>
       </Row>
+
+      {/* Phần thông tin tài khoản ngân hàng */}
+      <Card className="mb-4">
+        <Card.Header as="h5">Thông tin tài khoản ngân hàng</Card.Header>
+        <Card.Body>
+          {!hasBankInfo && (
+            <Alert variant="warning">
+              Vui lòng thêm thông tin tài khoản ngân hàng của bạn để nhận thanh
+              toán.
+            </Alert>
+          )}
+
+          {showForm ? (
+            <Form onSubmit={handleSubmit}>
+              <Row>
+                <Col md={6}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Số tài khoản</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="accountNumber"
+                      value={bankInfoForm.accountNumber}
+                      onChange={handleBankInfoChange}
+                      placeholder="Nhập số tài khoản của bạn"
+                      required
+                    />
+                  </Form.Group>
+                </Col>
+                <Col md={6}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Tên tài khoản</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="accountName"
+                      value={bankInfoForm.accountName}
+                      onChange={handleBankInfoChange}
+                      placeholder="Nhập tên chủ tài khoản"
+                      required
+                    />
+                  </Form.Group>
+                </Col>
+              </Row>
+              <Row>
+                <Col md={6}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Tên ngân hàng</Form.Label>
+                    <Form.Select
+                      name="bankName"
+                      value={bankInfoForm.bankName}
+                      onChange={handleBankInfoChange}
+                      required
+                    >
+                      <option value="">Chọn ngân hàng</option>
+                      <option value="MB Bank">MB Bank</option>
+                      <option value="Techcombank">Techcombank</option>
+                      <option value="Vietcombank">Vietcombank</option>
+                      <option value="BIDV">BIDV</option>
+                      <option value="HDBank">HDBank</option>
+                      <option value="VPBank">VPBank</option>
+                      <option value="TPBank">TPBank</option>
+                    </Form.Select>
+                  </Form.Group>
+                </Col>
+                <Col md={6}>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Chi nhánh</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="branch"
+                      value={bankInfoForm.branch}
+                      onChange={handleBankInfoChange}
+                      placeholder="Nhập chi nhánh ngân hàng"
+                    />
+                  </Form.Group>
+                </Col>
+              </Row>
+              <div>
+                <Button variant="primary" type="submit">
+                  {hasBankInfo
+                    ? "Cập nhật thông tin ngân hàng"
+                    : "Lưu thông tin ngân hàng"}
+                </Button>
+                {hasBankInfo && (
+                  <Button
+                    variant="secondary"
+                    className="ms-2"
+                    type="button"
+                    onClick={handleCancel}
+                  >
+                    Hủy
+                  </Button>
+                )}
+              </div>
+            </Form>
+          ) : (
+            <>
+              {bankInfo && (
+                <div>
+                  <Row className="mb-3">
+                    <Col md={6}>
+                      <strong>Số tài khoản:</strong> {bankInfo.accountNumber}
+                    </Col>
+                    <Col md={6}>
+                      <strong>Tên tài khoản:</strong> {bankInfo.accountName}
+                    </Col>
+                  </Row>
+                  <Row className="mb-3">
+                    <Col md={6}>
+                      <strong>Tên ngân hàng:</strong> {bankInfo.bankName}
+                    </Col>
+                    <Col md={6}>
+                      <strong>Chi nhánh:</strong> {bankInfo.branch || "N/A"}
+                    </Col>
+                  </Row>
+                  <div>
+                    <Button variant="outline-primary" onClick={handleEdit}>
+                      Chỉnh sửa thông tin ngân hàng
+                    </Button>
+                    <Button
+                      variant="outline-danger"
+                      className="ms-2"
+                      onClick={handleDelete}
+                    >
+                      Xóa thông tin ngân hàng
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </Card.Body>
+      </Card>
 
       <Card className="mb-4">
         <Card.Header as="h5">

@@ -7,6 +7,9 @@ const ApiConstants = {
   CHANGE_PASSWORD: "/auth/changePassword_customer",
   UPDATE_PROFILE: "/auth/updateProfile_customer",
   UPDATE_AVATAR: "/auth/update_avatar",
+  FORGOT_PASSWORD: "/auth/forgot_password",
+  RESET_PASSWORD: "/auth/reset_password",
+  VERIFY_FORGOT_PASSWORD: "/auth/verify_forgot_password",
   //FEEDBACK:
   FEEDBACK_HOTEL: "/feedback/get-feedback-hotel/:hotelId",
   FETCH_FEEDBACK_BY_ID: "/feedback/getFeedbackById/:feedbackId",
@@ -34,7 +37,6 @@ const ApiConstants = {
   //Image_Hotel:
   UPLOAD_HOTEL_IMAGE: "/hotel/upload_images",
   DELETE_HOTEL_IMAGE: "/hotel/delete_images",
-
 
   //Room:
   FETCH_ROOM: "/room/rooms_information/:hotelId",

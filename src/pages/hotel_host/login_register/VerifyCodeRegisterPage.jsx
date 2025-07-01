@@ -80,7 +80,7 @@ const VerifyCodeRegisterPage = () => {
     const code = verificationCode.join("");
     
     if (code.length !== 6) {
-      showToast.error("Please enter all 6 digits of the verification code");
+      showToast.error("Vui lòng nhập đầy đủ 6 chữ số của mã xác thực");
       return;
     }
     
@@ -93,7 +93,7 @@ const VerifyCodeRegisterPage = () => {
         onSuccess: (data) => {
           setIsLoading(false);
           navigate(Routers.LoginHotelPage, { 
-            state: { message: "Your account has been verified. You can now log in." }
+            state: { message: "Tài khoản của bạn đã được xác thực. Bạn có thể đăng nhập ngay bây giờ." }
           });
         },
         onFailed: (msg) => {
@@ -102,7 +102,7 @@ const VerifyCodeRegisterPage = () => {
         },
         onError: (error) => {
           setIsLoading(false);
-          showToast.error("Error verifying email");
+          showToast.error("Lỗi khi xác thực email");
         },
       },
     });
@@ -110,7 +110,7 @@ const VerifyCodeRegisterPage = () => {
   
   const handleResendCode = () => {
     if (!userEmail) {
-      showToast.error("Email is missing. Please go back to the registration page.");
+      showToast.error("Email bị thiếu. Vui lòng quay lại trang đăng ký.");
       return;
     }
     
@@ -122,7 +122,7 @@ const VerifyCodeRegisterPage = () => {
         data: { email: userEmail },
         onSuccess: (data) => {
           setIsResending(false);
-          showToast.success("A new verification code has been sent to your email");
+          showToast.success("Mã xác thực mới đã được gửi đến email của bạn");
         },
         onFailed: (msg) => {
           setIsResending(false);
@@ -130,7 +130,7 @@ const VerifyCodeRegisterPage = () => {
         },
         onError: (error) => {
           setIsResending(false);
-          showToast.error("Failed to resend verification code");
+          showToast.error("Không thể gửi lại mã xác thực");
         },
       },
     });
@@ -149,19 +149,19 @@ const VerifyCodeRegisterPage = () => {
         <ToastProvider />
         <Card className="mx-auto shadow" style={{ maxWidth: "800px" }}>
           <Card.Body className="p-4 p-md-5">
-            <h2 className="text-center mb-2">Verify Code</h2>
+            <h2 className="text-center mb-2">Xác Thực Mã</h2>
             <div className="text-center mb-4">
-              <span className="text-muted">The code is sent to your email</span>
+              <span className="text-muted">Mã đã được gửi đến email của bạn</span>
               <br />
               <span className="text-muted">
-                Please check your email to receive the code
+                Vui lòng kiểm tra email để nhận mã xác thực
               </span>
             </div>
 
             <Form onSubmit={handleSubmit}>
               <Form.Group className="mb-4">
                 <Form.Label style={{ fontWeight: 500 }}>
-                  Verification Code
+                  Mã Xác Thực
                 </Form.Label>
                 <div className="d-flex justify-content-between gap-2 mt-3">
                   {verificationCode.map((digit, index) => (
@@ -194,7 +194,7 @@ const VerifyCodeRegisterPage = () => {
               </Form.Group>
 
               <div className="text-center mb-3">
-                <span className="text-muted">Didn't receive the code? </span>
+                <span className="text-muted">Không nhận được mã? </span>
                 <Button
                   variant="link"
                   className="text-decoration-none p-0"
@@ -212,10 +212,10 @@ const VerifyCodeRegisterPage = () => {
                         aria-hidden="true"
                         className="me-1"
                       />
-                      Sending...
+                      Đang gửi...
                     </>
                   ) : (
-                    "Resend code"
+                    "Gửi lại mã"
                   )}
                 </Button>
               </div>
@@ -236,10 +236,10 @@ const VerifyCodeRegisterPage = () => {
                       aria-hidden="true"
                       className="me-2"
                     />
-                    Verifying...
+                    Đang xác thực...
                   </>
                 ) : (
-                  "Verify Code"
+                  "Xác Thực Mã"
                 )}
               </Button>
             </Form>

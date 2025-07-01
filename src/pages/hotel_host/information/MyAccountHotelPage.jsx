@@ -23,9 +23,9 @@ function MyAccountHotelPage() {
     setIndexActive(index);
   };
   const menuItems = [
-    { name: "My Account", icon: <IoSettingsSharp /> },
-    { name: "Change Password", icon: <FaKey /> },
-    { name: "View Avatar", icon: <FaImage /> },
+    { name: "Tài Khoản Của Tôi", icon: <IoSettingsSharp /> },
+    { name: "Đổi Mật Khẩu", icon: <FaKey /> },
+    { name: "Xem Ảnh Đại Diện", icon: <FaImage /> },
   ];
 
   return (

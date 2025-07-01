@@ -43,6 +43,44 @@ const LoginHotelPage = () => {
     });
   };
 
+
+  const handleResendVerification = () => {
+    if (!unverifiedEmail) {
+      setShowVerifyModal(false);
+      return;
+    }
+
+    setIsResending(true);
+    console.log("ABC")
+    dispatch({
+      type: AuthActions.RESEND_VERIFICATION,
+      payload: {
+        data: { email: unverifiedEmail },
+        onSuccess: (data) => {
+          setIsResending(false);
+          showToast.success(
+            "A new verification code has been sent to your email"
+          );
+          setShowVerifyModal(false);
+          navigate(Routers.VerifyCodeRegisterPage, {
+            state: {
+              message: "Please check your email for the verification code",
+              email: unverifiedEmail,
+            },
+          });
+        },
+        onFailed: (msg) => {
+          setIsResending(false);
+          showToast.error(msg);
+        },
+        onError: (error) => {
+          setIsResending(false);
+          showToast.error("Failed to resend verification code");
+        },
+      },
+    });
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -178,18 +216,6 @@ const LoginHotelPage = () => {
               </div>
 
               <Button
-                variant="outline-success"
-                className="w-100 mb-3 py-2 d-flex align-items-center justify-content-center"
-              >
-                <img
-                  src="https://cdn.pixabay.com/photo/2016/04/13/14/27/google-chrome-1326908_640.png"
-                  alt="Google"
-                  style={{ width: "20px", marginRight: "10px" }}
-                />
-                Tiếp tục với Google
-              </Button>
-
-              <Button
                 variant="primary"
                 type="submit"
                 className="w-100 py-2 mb-4"
@@ -247,6 +273,7 @@ const LoginHotelPage = () => {
           <Button
             variant="primary"
             disabled={isResending}
+            onClick={handleResendVerification}
           >
             {isResending ? (
               <>

@@ -1,5 +1,3 @@
-"use client"
-
 import { useState } from "react"
 import { Row, Col, Card, Badge, Button, Form, Tooltip, OverlayTrigger, Modal, Table } from "react-bootstrap"
 import {
@@ -20,9 +18,42 @@ import {
   FaSpa,
   FaSwimmingPool,
 } from "react-icons/fa"
+import { useAppSelector, useAppDispatch } from "@redux/store"
+import RoomUnitActions from "@redux/room_unit/action"
 import "../../css/hotelHost/BookingSchedule.css"
 
 function RoomAvailabilityCalendar() {
+  const dispatch = useAppDispatch()
+
+  // Lấy dữ liệu từ Redux store với fallback
+  const { 
+    rooms = [], 
+    bookings: rawBookings = [], 
+    availableServices = [], 
+    filters = {}, 
+    loading = false, 
+    error = null 
+  } = useAppSelector((state) => state.RoomUnit)
+
+  // Nếu availableServices trống, khởi tạo dữ liệu mẫu
+  const defaultServices = [
+    { id: 1, name: "WiFi", price: 5, icon: FaWifi },
+    { id: 2, name: "Bữa sáng", price: 15, icon: FaUtensils },
+    { id: 3, name: "Minibar", price: 20, icon: FaWineGlassAlt },
+    { id: 4, name: "Đỗ xe", price: 10, icon: FaCar },
+    { id: 5, name: "Spa", price: 50, icon: FaSpa },
+    { id: 6, name: "Hồ bơi", price: 25, icon: FaSwimmingPool },
+  ]
+
+  const services = availableServices.length > 0 ? availableServices : defaultServices
+  
+  // Chuyển đổi bookings về đúng kiểu Date
+  const bookings = rawBookings.map(b => ({
+    ...b,
+    startDate: b.startDate instanceof Date ? b.startDate : new Date(b.startDate),
+    endDate: b.endDate instanceof Date ? b.endDate : new Date(b.endDate),
+  }))
+
   // State cho ngày hiện tại và phạm vi hiển thị
   const [currentDate, setCurrentDate] = useState(new Date())
   const [viewDays, setViewDays] = useState(14) // Số ngày hiển thị
@@ -44,194 +75,6 @@ function RoomAvailabilityCalendar() {
   const [checkOutBooking, setCheckOutBooking] = useState(null)
   const [selectedServices, setSelectedServices] = useState([])
   const [paymentMethod, setPaymentMethod] = useState("credit")
-
-  // Dữ liệu mẫu về phòng
-  const [rooms, setRooms] = useState([
-    {
-      id: 101,
-      name: "101",
-      type: "Single",
-      capacity: 1,
-      price: 85,
-      status: "available",
-    },
-    {
-      id: 102,
-      name: "102",
-      type: "Single",
-      capacity: 1,
-      price: 85,
-      status: "available",
-    },
-    {
-      id: 103,
-      name: "103",
-      type: "Double",
-      capacity: 2,
-      price: 120,
-      status: "available",
-    },
-    {
-      id: 104,
-      name: "104",
-      type: "Double",
-      capacity: 2,
-      price: 120,
-      status: "available",
-    },
-    {
-      id: 105,
-      name: "105",
-      type: "Suite",
-      capacity: 3,
-      price: 200,
-      status: "available",
-    },
-    {
-      id: 201,
-      name: "201",
-      type: "Single",
-      capacity: 1,
-      price: 90,
-      status: "available",
-    },
-    {
-      id: 202,
-      name: "202",
-      type: "Double",
-      capacity: 2,
-      price: 130,
-      status: "available",
-    },
-    {
-      id: 203,
-      name: "203",
-      type: "Suite",
-      capacity: 4,
-      price: 250,
-      status: "available",
-    },
-    {
-      id: 204,
-      name: "204",
-      type: "Double",
-      capacity: 2,
-      price: 130,
-      status: "available",
-    },
-    {
-      id: 205,
-      name: "205",
-      type: "Single",
-      capacity: 1,
-      price: 90,
-      status: "available",
-    },
-  ])
-
-  // Dữ liệu mẫu về đặt phòng
-  const [bookings, setBookings] = useState([
-    {
-      id: 1,
-      roomId: 101,
-      guestName: "Nguyễn Văn A",
-      startDate: new Date(2024, 2, 18),
-      endDate: new Date(2024, 2, 20),
-      status: "confirmed",
-      type: "single",
-      guestCount: 1,
-      paymentStatus: "paid",
-      checkedIn: true,
-      checkedOut: false,
-      services: [],
-      depositAmount: 85,
-      idNumber: "123456789",
-      phoneNumber: "0987654321",
-      email: "nguyen.van.a@example.com",
-    },
-    {
-      id: 2,
-      roomId: 103,
-      guestName: "Trần Thị B",
-      startDate: new Date(2024, 2, 19),
-      endDate: new Date(2024, 2, 22),
-      status: "confirmed",
-      type: "double",
-      guestCount: 2,
-      paymentStatus: "pending",
-      checkedIn: false,
-      checkedOut: false,
-      services: [],
-      depositAmount: 0,
-      idNumber: "987654321",
-      phoneNumber: "0123456789",
-      email: "tran.thi.b@example.com",
-    },
-    {
-      id: 3,
-      roomId: 105,
-      guestName: "Lê Văn C",
-      startDate: new Date(2024, 2, 17),
-      endDate: new Date(2024, 2, 21),
-      status: "confirmed",
-      type: "suite",
-      guestCount: 3,
-      paymentStatus: "paid",
-      checkedIn: true,
-      checkedOut: false,
-      services: [],
-      depositAmount: 200,
-      idNumber: "456789123",
-      phoneNumber: "0345678912",
-      email: "le.van.c@example.com",
-    },
-    {
-      id: 4,
-      roomId: 202,
-      guestName: "Phạm Thị D",
-      startDate: new Date(2024, 2, 20),
-      endDate: new Date(2024, 2, 25),
-      status: "confirmed",
-      type: "double",
-      guestCount: 2,
-      paymentStatus: "paid",
-      checkedIn: true,
-      checkedOut: false,
-      services: [],
-      depositAmount: 130,
-      idNumber: "789123456",
-      phoneNumber: "0567891234",
-      email: "pham.thi.d@example.com",
-    },
-    {
-      id: 5,
-      roomId: 204,
-      guestName: "Hoàng Văn E",
-      startDate: new Date(2024, 2, 18),
-      endDate: new Date(2024, 2, 19),
-      status: "confirmed",
-      type: "double",
-      guestCount: 2,
-      paymentStatus: "paid",
-      checkedIn: true,
-      checkedOut: false,
-      services: [],
-      depositAmount: 130,
-      idNumber: "321654987",
-      phoneNumber: "0789123456",
-      email: "hoang.van.e@example.com",
-    },
-  ])
-
-  // Các dịch vụ có sẵn
-  const availableServices = [
-    { id: 1, name: "WiFi Cao cấp", icon: FaWifi, price: 10 },
-    { id: 2, name: "Bữa sáng", icon: FaUtensils, price: 15 },
-    { id: 3, name: "Mini Bar", icon: FaWineGlassAlt, price: 25 },
-    { id: 4, name: "Bãi đậu xe", icon: FaCar, price: 12 },
-    { id: 5, name: "Dịch vụ Spa", icon: FaSpa, price: 50 },
-    { id: 6, name: "Sử dụng hồ bơi", icon: FaSwimmingPool, price: 20 },
-  ]
 
   // Tạo ngày cho lịch
   const getDates = () => {
@@ -339,7 +182,10 @@ function RoomAvailabilityCalendar() {
     }
 
     // Thêm đặt phòng vào danh sách
-    setBookings([...bookings, newBooking])
+    dispatch({
+      type: RoomUnitActions.ADD_BOOKING_SUCCESS,
+      payload: newBooking,
+    })
 
     // Đóng modal
     setShowBookingModal(false)
@@ -359,6 +205,7 @@ function RoomAvailabilityCalendar() {
 
   // Mở modal trả phòng
   const openCheckOutModal = (booking) => {
+    console.log('Opening checkout modal for booking:', booking) // Debug
     setCheckOutBooking(booking)
     setSelectedServices([])
     setShowCheckOutModal(true)
@@ -366,35 +213,19 @@ function RoomAvailabilityCalendar() {
 
   // Xử lý xác nhận nhận phòng
   const handleCheckIn = (bookingId, depositAmount) => {
-    const updatedBookings = bookings.map((booking) => {
-      if (booking.id === bookingId) {
-        return {
-          ...booking,
-          checkedIn: true,
-          paymentStatus: depositAmount > 0 ? "partially paid" : "pending",
-          depositAmount: depositAmount,
-        }
-      }
-      return booking
+    dispatch({
+      type: RoomUnitActions.CHECK_IN_SUCCESS,
+      payload: { bookingId, depositAmount },
     })
-    setBookings(updatedBookings)
     setShowCheckInModal(false)
   }
 
   // Xử lý xác nhận trả phòng
   const handleCheckOut = (bookingId, selectedServices) => {
-    const updatedBookings = bookings.map((booking) => {
-      if (booking.id === bookingId) {
-        return {
-          ...booking,
-          checkedOut: true,
-          paymentStatus: "paid",
-          services: selectedServices,
-        }
-      }
-      return booking
+    dispatch({
+      type: RoomUnitActions.CHECK_OUT_SUCCESS,
+      payload: { bookingId, selectedServices },
     })
-    setBookings(updatedBookings)
     setShowCheckOutModal(false)
   }
 
@@ -409,7 +240,7 @@ function RoomAvailabilityCalendar() {
 
   // Tính tổng hóa đơn cho trả phòng
   const calculateBill = (booking) => {
-    if (!booking)
+    if (!booking) {
       return {
         roomCharge: 0,
         serviceCharge: 0,
@@ -417,33 +248,47 @@ function RoomAvailabilityCalendar() {
         deposit: 0,
         balance: 0,
       }
+    }
 
-    // Lấy giá phòng
-    const room = rooms.find((r) => r.id === booking.roomId)
-    const roomPrice = room ? room.price : 0
+    try {
+      // Lấy giá phòng
+      const room = rooms.find((r) => r.id === booking.roomId)
+      const roomPrice = room ? room.price : 0
 
-    // Tính số đêm
-    const nights = Math.round((booking.endDate - booking.startDate) / (1000 * 60 * 60 * 24))
+      // Tính số đêm
+      const nights = Math.round((booking.endDate - booking.startDate) / (1000 * 60 * 60 * 24))
 
-    // Tính phí phòng
-    const roomCharge = roomPrice * nights
+      // Tính phí phòng
+      const roomCharge = roomPrice * nights
 
-    // Tính phí dịch vụ
-    const serviceCharge = selectedServices.reduce((total, service) => total + service.price, 0)
+      // Tính phí dịch vụ - kiểm tra an toàn
+      const serviceCharge = Array.isArray(selectedServices) 
+        ? selectedServices.reduce((total, service) => total + (service.price || 0), 0)
+        : 0
 
-    // Tính tổng
-    const total = roomCharge + serviceCharge
+      // Tính tổng
+      const total = roomCharge + serviceCharge
 
-    // Tính số tiền còn lại (tổng - đặt cọc)
-    const deposit = booking.depositAmount || 0
-    const balance = total - deposit
+      // Tính số tiền còn lại (tổng - đặt cọc)
+      const deposit = booking.depositAmount || 0
+      const balance = total - deposit
 
-    return {
-      roomCharge,
-      serviceCharge,
-      total,
-      deposit,
-      balance,
+      return {
+        roomCharge,
+        serviceCharge,
+        total,
+        deposit,
+        balance,
+      }
+    } catch (error) {
+      console.error('Error calculating bill:', error)
+      return {
+        roomCharge: 0,
+        serviceCharge: 0,
+        total: 0,
+        deposit: 0,
+        balance: 0,
+      }
     }
   }
 
@@ -502,9 +347,9 @@ function RoomAvailabilityCalendar() {
                   <Form.Select value={filterRoomType} onChange={(e) => setFilterRoomType(e.target.value)}>
                     <option value="all">Tất cả phòng</option>
                     <option value="available">Phòng trống</option>
-                    <option value="single">Phòng đơn</option>
-                    <option value="double">Phòng đôi</option>
-                    <option value="suite">Phòng Suite</option>
+                    <option value="Single room">Phòng đơn</option>
+                    <option value="Double room">Phòng đôi</option>
+                    <option value="Family room">Phòng gia đình</option>
                   </Form.Select>
                 </Form.Group>
               </Col>
@@ -589,7 +434,7 @@ function RoomAvailabilityCalendar() {
                 <div className="calendar-cell room-header">
                   Phòng
                   <div className="room-actions">
-                    <small>Nhấp vào phòng để xem tùy chọn</small>
+                    <small>Nhấp vào phòng để xem tùy chọn!!</small>
                   </div>
                 </div>
                 {getDates().map((date, index) => (
@@ -613,8 +458,8 @@ function RoomAvailabilityCalendar() {
                       <div className="room-number">{room.name}</div>
                     </div>
                     <div className="room-type">
-                      <Badge bg={room.type === "Single" ? "info" : room.type === "Double" ? "primary" : "success"}>
-                        {room.type === "Single" ? "Đơn" : room.type === "Double" ? "Đôi" : "Suite"}
+                      <Badge bg={room.type === "Single room" ? "info" : room.type === "Double room" ? "primary" : "success"}>
+                        {room.type === "Single room" ? "Phòng Đơn" : room.type === "Double room" ? "Phòng Đôi" : "Phòng Gia Đình"}
                       </Badge>
                     </div>
                     <div className="room-capacity">
@@ -789,7 +634,7 @@ function RoomAvailabilityCalendar() {
                 <Form.Label>Loại phòng</Form.Label>
                 <Form.Control
                   type="text"
-                  value={selectedRoom.type === "Single" ? "Đơn" : selectedRoom.type === "Double" ? "Đôi" : "Suite"}
+                  value={selectedRoom.type === "Single room" ? "Đơn" : selectedRoom.type === "Double room" ? "Đôi" : "Suite"}
                   disabled
                 />
               </Form.Group>
@@ -844,14 +689,14 @@ function RoomAvailabilityCalendar() {
                   <div className="detail-value">
                     <Badge
                       bg={
-                        selectedBooking.type === "single"
+                        selectedBooking.type === "Single room"
                           ? "info"
-                          : selectedBooking.type === "double"
+                          : selectedBooking.type === "Double room"
                             ? "primary"
                             : "success"
                       }
                     >
-                      {selectedBooking.type === "single" ? "Đơn" : selectedBooking.type === "double" ? "Đôi" : "Suite"}
+                      {selectedBooking.type === "Single room" ? "Đơn" : selectedBooking.type === "Double room" ? "Đôi" : "Suite"}
                     </Badge>
                   </div>
                 </div>
@@ -995,9 +840,9 @@ function RoomAvailabilityCalendar() {
                     <Card.Body>
                       <p>
                         <strong>Phòng:</strong> {checkInBooking.roomId} (
-                        {rooms.find((r) => r.id === checkInBooking.roomId)?.type === "Single"
+                        {rooms.find((r) => r.id === checkInBooking.roomId)?.type === "Single room"
                           ? "Đơn"
-                          : rooms.find((r) => r.id === checkInBooking.roomId)?.type === "Double"
+                          : rooms.find((r) => r.id === checkInBooking.roomId)?.type === "Double room"
                             ? "Đôi"
                             : "Suite"}
                         )
@@ -1106,7 +951,7 @@ function RoomAvailabilityCalendar() {
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          {checkOutBooking && (
+          {checkOutBooking ? (
             <div>
               <Row>
                 <Col md={6}>
@@ -1138,9 +983,9 @@ function RoomAvailabilityCalendar() {
                     <Card.Body>
                       <p>
                         <strong>Phòng:</strong> {checkOutBooking.roomId} (
-                        {rooms.find((r) => r.id === checkOutBooking.roomId)?.type === "Single"
+                        {rooms.find((r) => r.id === checkOutBooking.roomId)?.type === "Single room"
                           ? "Đơn"
-                          : rooms.find((r) => r.id === checkOutBooking.roomId)?.type === "Double"
+                          : rooms.find((r) => r.id === checkOutBooking.roomId)?.type === "Double room"
                             ? "Đôi"
                             : "Suite"}
                         )
@@ -1170,22 +1015,28 @@ function RoomAvailabilityCalendar() {
                 <Card.Body>
                   <p>Chọn các dịch vụ bổ sung mà khách đã sử dụng:</p>
                   <Row>
-                    {availableServices.map((service) => (
-                      <Col md={4} key={service.id} className="mb-2">
-                        <Form.Check
-                          type="checkbox"
-                          id={`service-${service.id}`}
-                          label={
-                            <span>
-                              <service.icon className="me-2" />
-                              {service.name} (${service.price})
-                            </span>
-                          }
-                          checked={selectedServices.some((s) => s.id === service.id)}
-                          onChange={() => toggleService(service)}
-                        />
+                    {Array.isArray(availableServices) && availableServices.length > 0 ? (
+                      availableServices.map((service) => (
+                        <Col md={4} key={service.id} className="mb-2">
+                          <Form.Check
+                            type="checkbox"
+                            id={`service-${service.id}`}
+                            label={
+                              <span>
+                                {service.icon && <service.icon className="me-2" />}
+                                {service.name} (${service.price})
+                              </span>
+                            }
+                            checked={selectedServices.some((s) => s.id === service.id)}
+                            onChange={() => toggleService(service)}
+                          />
+                        </Col>
+                      ))
+                    ) : (
+                      <Col>
+                        <p className="text-muted">Không có dịch vụ bổ sung nào.</p>
                       </Col>
-                    ))}
+                    )}
                   </Row>
                 </Card.Body>
               </Card>
@@ -1229,7 +1080,9 @@ function RoomAvailabilityCalendar() {
                       </tr>
                       <tr>
                         <td>Đã đặt cọc</td>
-                        <td className="text-end">-${checkOutBooking.depositAmount.toFixed(2)}</td>
+                        <td className="text-end">
+                          -${(checkOutBooking.depositAmount || 0).toFixed(2)}
+                        </td>
                       </tr>
                       <tr className="table-primary">
                         <td className="fw-bold">Số tiền cần thanh toán</td>
@@ -1256,14 +1109,18 @@ function RoomAvailabilityCalendar() {
                   Hủy
                 </Button>
                 <div>
-                  <Button variant="outline-primary" className="me-2">
-                    <FaPrint className="me-2" /> In hóa đơn
-                  </Button>
                   <Button variant="danger" onClick={() => handleCheckOut(checkOutBooking.id, selectedServices)}>
                     <FaSignOutAlt className="me-2" /> Xác nhận trả phòng
                   </Button>
                 </div>
               </div>
+            </div>
+          ) : (
+            <div className="text-center p-4">
+              <p>Không thể tải thông tin đặt phòng.</p>
+              <Button variant="secondary" onClick={() => setShowCheckOutModal(false)}>
+                Đóng
+              </Button>
             </div>
           )}
         </Modal.Body>

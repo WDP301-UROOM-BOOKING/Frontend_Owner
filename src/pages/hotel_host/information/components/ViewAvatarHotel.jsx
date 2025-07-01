@@ -32,7 +32,7 @@ function ViewAvatar() {
 
   const handleUploadFile = () => {
     if (!selectedFile) {
-      showToast.warning("Please select a file to upload.");
+      showToast.warning("Vui lòng chọn tệp để tải lên.");
       return;
     }
 
@@ -45,15 +45,15 @@ function ViewAvatar() {
         formData: formData,
         onSuccess: (MsgYes) => {
           setLoading(false);
-          showToast.success(MsgYes || "Avatar updated successfully!");
+          showToast.success(MsgYes || "Cập nhật ảnh đại diện thành công!");
           setSelectedImage(Auth.image.url); // Cập nhật lại ảnh sau khi upload
         },
         onFailed: (MsgNo) => {
-          showToast.warning(MsgNo || "Failed to update avatar.");
+          showToast.warning(MsgNo || "Cập nhật ảnh đại diện thất bại.");
           setLoading(false);
         },
         onError: (MsgNo) => {
-          showToast.warning(MsgNo || "Something went wrong!");
+          showToast.warning(MsgNo || "Đã xảy ra lỗi!");
           setLoading(false);
         },
       },
@@ -62,7 +62,7 @@ function ViewAvatar() {
 
   return (
     <Card.Body>
-      <h2 className="fw-bold mb-4">View Avatar</h2>
+      <h2 className="fw-bold mb-4">Xem Ảnh Đại Diện</h2>
       <div className="text-center">
         <img
           src={
@@ -72,7 +72,7 @@ function ViewAvatar() {
           }
           className="rounded-circle mb-2"
           style={{ width: "150px", height: "150px", objectFit: "cover" }}
-          alt="avatar"
+          alt="ảnh đại diện"
         />
         <br />
         <Button
@@ -80,13 +80,13 @@ function ViewAvatar() {
           variant="outline-primary"
           onClick={handleOpenModal}
         >
-          View Avatar
+          Xem Ảnh Đại Diện
         </Button>
       </div>
       <p className="text-center text-muted">
-        Maximum file size is 1 MB
+        Kích thước tệp tối đa là 1 MB
         <br />
-        Format JPEG, PNG, JPG, ...
+        Định dạng JPEG, PNG, JPG, ...
       </p>
       <Form>
         <Form.Group controlId="formFile" className="mb-3 text-center">
@@ -106,7 +106,7 @@ function ViewAvatar() {
               setShowUpdateModal(true);
             }}
           >
-            CANCEL
+            HỦY BỎ
           </Button>
           <Button
             variant="primary"
@@ -122,10 +122,10 @@ function ViewAvatar() {
                   role="status"
                   aria-hidden="true"
                 ></span>
-                Uploading...
+                Đang tải lên...
               </>
             ) : (
-              "Upload"
+              "Tải lên"
             )}
           </Button>
         </div>
@@ -139,7 +139,7 @@ function ViewAvatar() {
         size="lg"
       >
         <Modal.Header closeButton>
-          <Modal.Title>Customer Avatar</Modal.Title>
+          <Modal.Title>Ảnh Đại Diện Khách Hàng</Modal.Title>
         </Modal.Header>
         <Modal.Body className="text-center p-4">
           <img
@@ -148,14 +148,14 @@ function ViewAvatar() {
                 ? selectedImage
                 : "https://i.pinimg.com/736x/8f/1c/a2/8f1ca2029e2efceebd22fa05cca423d7.jpg"
             }
-            alt="Customer avatar"
+            alt="Ảnh đại diện khách hàng"
             className="img-fluid"
             style={{ height: "480px", width: "480px" }}
           />
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={handleCloseModal}>
-            Close
+            Đóng
           </Button>
         </Modal.Footer>
       </Modal>
@@ -167,9 +167,9 @@ function ViewAvatar() {
           setSelectedImage(Auth.image.url);
           setSelectedFile();
         }}
-        title="Confirm Cancel"
-        message="Are you sure you want to reset this avatar ?"
-        confirmButtonText="Confirm"
+        title="Xác nhận hủy bỏ"
+        message="Bạn có chắc chắn muốn khôi phục lại ảnh đại diện này không?"
+        confirmButtonText="Xác nhận"
         type="warning"
       />
 
@@ -178,9 +178,9 @@ function ViewAvatar() {
         show={showAcceptModal}
         onHide={() => setShowAcceptModal(false)}
         onConfirm={handleUploadFile}
-        title="Confirm Update"
-        message="Are you sure you want to update this new avatar?"
-        confirmButtonText="Accept"
+        title="Xác nhận cập nhật"
+        message="Bạn có chắc chắn muốn cập nhật ảnh đại diện mới này không?"
+        confirmButtonText="Đồng ý"
         type="accept"
       />
     </Card.Body>

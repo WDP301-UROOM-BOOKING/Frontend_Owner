@@ -18,14 +18,14 @@ import { Star, StarFill } from "react-bootstrap-icons";
 import ConfirmationModal from "@components/ConfirmationModal";
 import Utils from "../../../utils/Utils";
 
-const STATUS_OPTIONS = ["All", "Pending", "Approved", "Rejected"];
+const STATUS_OPTIONS = ["Tất cả", "Chờ xử lý", "Đã duyệt", "Đã từ chối"];
 
 const MyReportPage = () => {
   const dispatch = useAppDispatch();
   const Auth = useAppSelector((state) => state.Auth.Auth);
   const [reportFeedbacks, setReportFeedbacks] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [sortOption, setSortOption] = useState("All");
+  const [sortOption, setSortOption] = useState("Tất cả");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 3;
   const [showAcceptModal, setShowAcceptModal] = useState(false);
@@ -47,7 +47,7 @@ const MyReportPage = () => {
         },
         onFailed: () => setLoading(false),
         onError: (err) => {
-          showToast.error("Server error while fetching report feedbacks");
+          showToast.error("Lỗi máy chủ khi tải báo cáo phản hồi");
           console.error(err);
           setLoading(false);
         },
@@ -72,7 +72,7 @@ const MyReportPage = () => {
                 onSuccess: (feedbackData) => {
                   resolve({ ...report, feedback: feedbackData });
                 },
-                onFailed: () => reject("Failed to fetch feedback"),
+                onFailed: () => reject("Không thể tải phản hồi"),
                 onError: (err) => reject(err),
               },
             });
@@ -82,18 +82,29 @@ const MyReportPage = () => {
 
       setReportFeedbacks(results);
     } catch (err) {
-      console.error("Error fetching full feedbacks with hotel info:", err);
-      showToast.error("Lỗi khi tải dữ liệu feedback chi tiết.");
+      console.error("Lỗi khi tải thông tin phản hồi đầy đủ với thông tin khách sạn:", err);
+      showToast.error("Lỗi khi tải dữ liệu phản hồi chi tiết.");
     } finally {
       setLoading(false);
     }
+  };
+
+  // Map Vietnamese options to English status for filtering
+  const getStatusForFilter = (vietnameseOption) => {
+    const mapping = {
+      "Tất cả": "all",
+      "Chờ xử lý": "pending",
+      "Đã duyệt": "approved",
+      "Đã từ chối": "rejected"
+    };
+    return mapping[vietnameseOption] || "all";
   };
 
   const filteredReports = reportFeedbacks.filter((report) => {
     if (!report.status) return false;
 
     const normalizedStatus = report.status.trim().toLowerCase();
-    const selectedFilter = sortOption.toLowerCase();
+    const selectedFilter = getStatusForFilter(sortOption);
 
     return selectedFilter === "all" || normalizedStatus === selectedFilter;
   });
@@ -176,7 +187,7 @@ const MyReportPage = () => {
 
   const confirmDeleteFeedback = () => {
     if (!selectedFeedbackId) {
-      showToast.error("Feedback ID is missing.");
+      showToast.error("Thiếu ID phản hồi.");
       return;
     }
 
@@ -190,15 +201,15 @@ const MyReportPage = () => {
               (report) => report._id !== selectedFeedbackId
             )
           );
-          showToast.success("Feedback deleted successfully!");
+          showToast.success("Xóa phản hồi thành công!");
           setShowAcceptModal(false);
         },
         onFailed: (msg) => {
-          showToast.error(msg || "Failed to delete feedback");
+          showToast.error(msg || "Không thể xóa phản hồi");
           setShowAcceptModal(false);
         },
         onError: (err) => {
-          showToast.error("Server error while deleting feedback");
+          showToast.error("Lỗi máy chủ khi xóa phản hồi");
           console.error(err);
           setShowAcceptModal(false);
         },
@@ -224,14 +235,24 @@ const MyReportPage = () => {
     }
   }, [paginatedReports, currentPage]);
 
+  const getStatusDisplayText = (status) => {
+    const statusMapping = {
+      "pending": "Chờ xử lý",
+      "approved": "Đã duyệt",
+      "rejected": "Đã từ chối",
+      "reject": "Đã từ chối"
+    };
+    return statusMapping[status?.toLowerCase()] || status;
+  };
+
   return (
     <Container fluid className="bg-light py-4">
-      <h2 className="fw-bold mb-4">My Reported Feedbacks</h2>
+      <h2 className="fw-bold mb-4">Báo Cáo Phản Hồi Của Tôi</h2>
 
       {/* Filter by status */}
       <Row className="mb-4 align-items-center">
         <Col xs="auto">
-          <span className="me-2">Filter by status:</span>
+          <span className="me-2">Lọc theo trạng thái:</span>
         </Col>
         <Col xs="auto">
           <Form.Select
@@ -270,15 +291,15 @@ const MyReportPage = () => {
           >
             <img
               src="/empty-state.svg"
-              alt="No data"
+              alt="Không có dữ liệu"
               style={{ width: 80, height: 80, opacity: 0.75 }}
             />
           </div>
           <h5 className="text-muted fw-semibold">
-            No Reported {sortOption} Yet
+            Chưa Có Báo Cáo {sortOption}
           </h5>
           <p className="text-secondary mb-0" style={{ maxWidth: 350 }}>
-            You Haven't Had Any Reported {sortOption} Yet.
+            Bạn chưa có báo cáo {sortOption} nào.
           </p>
         </div>
       ) : (
@@ -290,7 +311,7 @@ const MyReportPage = () => {
                   <Col md={5} className="border-end border-2">
                     {report.feedback?.statusActive === "NONACTIVE" ? (
                       <div className="text-muted fst-italic text-center">
-                        <p className="mb-0">Feedback đã xoá</p>
+                        <p className="mb-0">Phản hồi đã bị xóa</p>
                       </div>
                     ) : (
                       <>
@@ -305,30 +326,30 @@ const MyReportPage = () => {
                           />
                           <div>
                             <h6 className="mb-0">
-                              {report.feedback?.user.name || "Unknown User"}
+                              {report.feedback?.user.name || "Người dùng không xác định"}
                             </h6>
                           </div>
                         </div>
                         <div className="mb-1">
-                          <strong>Rating:</strong>{" "}
+                          <strong>Đánh giá:</strong>{" "}
                           {renderStars(report.feedback.rating || 0)}
                         </div>
                         <div className="mb-1">
-                          <strong>Created at:</strong>{" "}
+                          <strong>Tạo lúc:</strong>{" "}
                           {Utils.getDate(report.feedback.createdAt, 4)}
                         </div>
                         <p className="mb-2">
-                          <strong>Description:</strong>{" "}
-                          {report.feedback?.content || "No feedback content"}
+                          <strong>Mô tả:</strong>{" "}
+                          {report.feedback?.content || "Không có nội dung phản hồi"}
                         </p>
                         <div className="d-flex gap-3 mt-2">
                           <b className="text-primary p-0 me-3">
                             <FaThumbsUp className="me-1" />
-                            {report.feedback?.likedBy?.length || 0} likes
+                            {report.feedback?.likedBy?.length || 0} thích
                           </b>
                           <b className="text-danger p-0">
                             <FaThumbsDown className="me-1" />
-                            {report.feedback?.dislikedBy?.length || 0} dislikes
+                            {report.feedback?.dislikedBy?.length || 0} không thích
                           </b>
                         </div>
                       </>
@@ -351,24 +372,24 @@ const MyReportPage = () => {
                           cursor: "pointer",
                           zIndex: 1,
                         }}
-                        aria-label="Delete"
+                        aria-label="Xóa"
                       >
                         &times;
                       </button>
                     )}
 
                     <p className="mb-1">
-                      <strong>Reason:</strong> {report.reason}
+                      <strong>Lý do:</strong> {report.reason}
                     </p>
                     <p className="mb-1">
-                      <strong>Description:</strong> {report.description}
+                      <strong>Mô tả:</strong> {report.description}
                     </p>
                     <div className="mb-1">
-                      <strong>Created at reported:</strong>{" "}
+                      <strong>Tạo báo cáo lúc:</strong>{" "}
                       {Utils.getDate(report.createdAt, 4)}
                     </div>
                     <p className="mb-0">
-                      <strong>Status:</strong>{" "}
+                      <strong>Trạng thái:</strong>{" "}
                       <span
                         className={`badge px-3 py-1 rounded-pill fw-medium ${
                           report.status?.toLowerCase() === "pending"
@@ -378,14 +399,14 @@ const MyReportPage = () => {
                             : "bg-danger"
                         }`}
                       >
-                        {report.status}
+                        {getStatusDisplayText(report.status)}
                       </span>
                     </p>
 
-                    {report.status === "REJECT" &&
+                    {(report.status === "REJECT" || report.status?.toLowerCase() === "rejected") &&
                       report.rejectReason?.trim() && (
                         <p className="text-danger mt-2 mb-0">
-                          <strong>Reason:</strong> {report.rejectReason}
+                          <strong>Lý do từ chối:</strong> {report.rejectReason}
                         </p>
                       )}
                   </Col>
@@ -402,8 +423,10 @@ const MyReportPage = () => {
         show={showAcceptModal}
         onHide={() => setShowAcceptModal(false)}
         onConfirm={confirmDeleteFeedback}
-        title="Confirm Deletion"
-        message="Are you sure you want to delete this reported feedback?"
+        title="Xác Nhận Xóa"
+        message="Bạn có chắc chắn muốn xóa báo cáo phản hồi này không?"
+        confirmButtonText="Xác nhận"
+        type="warning"
       />
     </Container>
   );

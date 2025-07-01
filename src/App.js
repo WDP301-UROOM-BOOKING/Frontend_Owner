@@ -51,13 +51,13 @@ function App() {
   const Auth = useAppSelector((state) => state.Auth.Auth);
 
   useEffect(() => {
-    if(Auth?._id === -1) return;
+    if (Auth?._id === -1) return;
     dispatch(initializeSocket());
   }, [Auth?._id]);
 
   useEffect(() => {
     if (!Socket) return;
-    if(Auth?._id === -1) return;
+    if (Auth?._id === -1) return;
 
     console.log("Socket initialized:", Socket.id);
     Socket.emit("register", Auth._id);
@@ -75,7 +75,7 @@ function App() {
       Socket.off("force-join-room", handleForceJoinRoom);
     };
   }, [Socket, Auth?._id]);
-  
+
   return (
     <Router>
       <Routes>
@@ -176,10 +176,7 @@ function App() {
           element={<MyAccountHotelPage />}
         />
 
-        <Route
-          path={Routers.CreateService}
-          element={<CreateService />}
-        />
+        <Route path={Routers.CreateService} element={<CreateService />} />
       </Routes>
     </Router>
   );

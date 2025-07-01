@@ -13,6 +13,7 @@ import ConfirmationModal from "@components/ConfirmationModal";
 import { showToast, ToastProvider } from "@components/ToastContainer";
 import { useDispatch } from "react-redux";
 import AuthActions from "../../../../redux/auth/actions";
+
 const ChangePassword = () => {
   const dispatch = useDispatch();
 
@@ -39,11 +40,11 @@ const ChangePassword = () => {
   const handleCancel = () => {
     const { oldPassword, newPassword, againNewPassword } = formData;
     if (!oldPassword || !newPassword || !againNewPassword) {
-      showToast.warning("Please fill in all fields.");
+      showToast.warning("Vui lòng điền đầy đủ tất cả các trường.");
       return;
     }
     setFormData(initialFormData); // Reset form
-    showToast.info("Cancelled change password.");
+    showToast.info("Đã hủy thay đổi mật khẩu.");
     setShowUpdateModal(false);
   };
 
@@ -51,7 +52,7 @@ const ChangePassword = () => {
     const { oldPassword, newPassword, againNewPassword } = formData;
 
     if (!oldPassword || !newPassword || !againNewPassword) {
-      showToast.warning("Please fill in all fields.");
+      showToast.warning("Vui lòng điền đầy đủ tất cả các trường.");
       return;
     }
 
@@ -60,12 +61,12 @@ const ChangePassword = () => {
       newPassword.length < 8 ||
       againNewPassword.length < 8
     ) {
-      showToast.warning("All passwords must be at least 8 characters long.");
+      showToast.warning("Tất cả mật khẩu phải có ít nhất 8 ký tự.");
       return;
     }
 
     if (newPassword !== againNewPassword) {
-      showToast.warning("New password and confirmation do not match.");
+      showToast.warning("Mật khẩu mới và xác nhận mật khẩu không khớp.");
       return;
     }
 
@@ -78,15 +79,15 @@ const ChangePassword = () => {
           confirmPassword: againNewPassword,
         },
         onSuccess: () => {
-          showToast.success("Password changed successfully!");
+          showToast.success("Đổi mật khẩu thành công!");
           setFormData(initialFormData);
         },
         onFailed: (msg) => {
-          showToast.warning(`Change failed: ${msg}`);
+          showToast.warning(`Đổi mật khẩu thất bại: ${msg}`);
         },
         onError: (err) => {
           console.error(err);
-          showToast.warning("An error occurred while changing password.");
+          showToast.warning("Đã xảy ra lỗi khi đổi mật khẩu.");
         },
       },
     });
@@ -101,16 +102,16 @@ const ChangePassword = () => {
 
   return (
     <Card.Body>
-      <h2 className="fw-bold mb-4">Change Password</h2>
+      <h2 className="fw-bold mb-4">Đổi Mật Khẩu</h2>
       <Form onSubmit={handleSubmit}>
         <Row className="mb-3">
           <Col md={6}>
             <Form.Group className="mb-3">
-              <Form.Label style={{ fontWeight: 500 }}>Old Password</Form.Label>
+              <Form.Label style={{ fontWeight: 500 }}>Mật khẩu cũ</Form.Label>
               <div className="position-relative">
                 <Form.Control
                   type={showPassword ? "text" : "password"}
-                  placeholder="Enter your old password"
+                  placeholder="Nhập mật khẩu cũ của bạn"
                   name="oldPassword"
                   value={formData.oldPassword}
                   onChange={handleChange}
@@ -130,11 +131,11 @@ const ChangePassword = () => {
         <Row className="mb-3">
           <Col md={6}>
             <Form.Group className="mb-3">
-              <Form.Label style={{ fontWeight: 500 }}>New Password</Form.Label>
+              <Form.Label style={{ fontWeight: 500 }}>Mật khẩu mới</Form.Label>
               <div className="position-relative">
                 <Form.Control
                   type={showPassword ? "text" : "password"}
-                  placeholder="Enter your new password"
+                  placeholder="Nhập mật khẩu mới của bạn"
                   name="newPassword"
                   value={formData.newPassword}
                   onChange={handleChange}
@@ -153,12 +154,12 @@ const ChangePassword = () => {
           <Col md={6}>
             <Form.Group className="mb-3">
               <Form.Label style={{ fontWeight: 500 }}>
-                Again New Password
+                Xác nhận mật khẩu mới
               </Form.Label>
               <div className="position-relative">
                 <Form.Control
                   type={showPassword ? "text" : "password"}
-                  placeholder="Enter again your new password"
+                  placeholder="Nhập lại mật khẩu mới của bạn"
                   name="againNewPassword"
                   value={formData.againNewPassword}
                   onChange={handleChange}
@@ -184,7 +185,7 @@ const ChangePassword = () => {
               setShowUpdateModal(true);
             }}
           >
-            CANCEL
+            HỦY BỎ
           </Button>
           <Button
             variant="primary"
@@ -194,7 +195,7 @@ const ChangePassword = () => {
               setShowAcceptModal(true);
             }}
           >
-            SAVE
+            LƯU
           </Button>
         </div>
       </Form>
@@ -203,9 +204,9 @@ const ChangePassword = () => {
         show={showUpdateModal}
         onHide={() => setShowUpdateModal(false)}
         onConfirm={handleCancel}
-        title="Confirm Cancel"
-        message="Are you sure you want to reset this information ?"
-        confirmButtonText="Confirm"
+        title="Xác nhận hủy bỏ"
+        message="Bạn có chắc chắn muốn khôi phục lại thông tin này không?"
+        confirmButtonText="Xác nhận"
         type="warning"
       />
 
@@ -214,9 +215,9 @@ const ChangePassword = () => {
         show={showAcceptModal}
         onHide={() => setShowAcceptModal(false)}
         onConfirm={handleSave}
-        title="Confirm Update"
-        message="Are you sure you want to change this new password ?"
-        confirmButtonText="Accept"
+        title="Xác nhận cập nhật"
+        message="Bạn có chắc chắn muốn thay đổi mật khẩu mới này không?"
+        confirmButtonText="Đồng ý"
         type="accept"
       />
     </Card.Body>
