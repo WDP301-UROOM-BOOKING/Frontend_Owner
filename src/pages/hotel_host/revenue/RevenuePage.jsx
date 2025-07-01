@@ -2,6 +2,7 @@ import { Line, Bar, Pie, Doughnut } from "react-chartjs-2";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import Utils from "@utils/Utils";
+import Factories from "@redux/room/factories";
 
 const ReservationActions = {
   FETCH_RESERVATIONS: "FETCH_RESERVATIONS",
@@ -9,14 +10,32 @@ const ReservationActions = {
   FETCH_RESERVATIONS_FAILURE: "FETCH_RESERVATIONS_FAILURE",
 };
 
+const getRecentYears = (num = 5) => {
+  const currentYear = new Date().getFullYear();
+  return Array.from({ length: num }, (_, i) => currentYear - i);
+};
+
 const RevenuePage = () => {
   const dispatch = useDispatch();
   const { reservations } = useSelector((state) => state.Reservation);
+  const hotelDetail = useSelector(state => state.Hotel.hotel);
+  const hotelId = hotelDetail?._id;
+
+  // Đặt các biến thời gian ở đầu component để mọi nơi đều dùng được
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1;
+
+  // State cho filter mới
+  const [periodType, setPeriodType] = useState("month"); // "month" | "year"
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
   // State for real data
   const [realData, setRealData] = useState(null);
-  // Thêm state cho filter period
-  const [period, setPeriod] = useState("month"); // "month" | "quarter" | "year"
+
+  // State for rooms
+  const [rooms, setRooms] = useState([]);
 
   // Helper to get month name in Vietnamese
   const getMonthName = (month) => {
@@ -38,12 +57,19 @@ const RevenuePage = () => {
     dispatch({
       type: ReservationActions.FETCH_RESERVATIONS,
       payload: {
-        // Lấy tất cả reservation từ tháng 1 đến hiện tại
-        year: new Date().getFullYear(),
+        year: selectedYear,
         sort: "desc",
       },
     });
-  }, [dispatch]);
+  }, [dispatch, selectedYear]);
+
+  useEffect(() => {
+    if (hotelId) {
+      Factories.fetchRoomByHotelId(hotelId).then(response => {
+        setRooms(Array.isArray(response?.rooms) ? response.rooms : []);
+      });
+    }
+  }, [hotelId]);
 
   // Process reservations data to create monthly stats
   useEffect(() => {
@@ -53,6 +79,14 @@ const RevenuePage = () => {
       const currentYear = new Date().getFullYear();
       const currentMonth = new Date().getMonth() + 1;
       const monthlyStats = [];
+
+      // Lọc reservation chỉ của khách sạn owner hiện tại (so sánh string)
+      const filteredReservations = hotelId
+        ? reservations.filter(res => {
+            const resHotelId = res.hotel?._id || res.hotel;
+            return resHotelId?.toString() === hotelId?.toString();
+          })
+        : [];
 
       // Group reservations by month
       for (let month = 1; month <= currentMonth; month++) {
@@ -114,14 +148,13 @@ const RevenuePage = () => {
         });
       }
 
-      // Calculate room type stats
+      // Calculate room type stats chỉ cho khách sạn hiện tại
       const roomTypeStats = [];
-      const roomNames = [...new Set(reservations.flatMap(res => 
-        res.rooms?.map(room => room.room?.name).filter(Boolean) || []
-      ))];
+      // Lấy tên phòng từ danh sách room của hotel hiện tại
+      const roomNames = rooms.map(room => room.name);
 
       roomNames.forEach(roomName => {
-        const roomReservations = reservations.filter(res => 
+        const roomReservations = filteredReservations.filter(res => 
           res.rooms?.some(room => room.room?.name === roomName) &&
           res.status !== "NOT PAID"
         );
@@ -179,7 +212,6 @@ const RevenuePage = () => {
   }, [reservations]);
 
   // Fallback mock data - chỉ hiển thị từ tháng 1 đến tháng hiện tại
-  const currentMonth = new Date().getMonth() + 1;
   const fallbackRevenueData = {
     labels: Array.from({ length: currentMonth }, (_, i) => getMonthName(i + 1)),
     datasets: [
@@ -216,32 +248,19 @@ const RevenuePage = () => {
     }
   })();
 
-  // Hàm lọc dữ liệu theo period
+  // Hàm lọc dữ liệu theo periodType, selectedMonth, selectedYear
   const getFilteredMonthlyStats = () => {
     if (!realData?.monthlyRevenueStats) return [];
-    const now = new Date();
-    const currentMonth = now.getMonth() + 1;
-    const currentYear = now.getFullYear();
-    if (period === "month") {
-      // Tháng này
+    if (periodType === "month") {
+      // Khi filter là tháng, chỉ lấy dữ liệu của tháng được chọn (cho bảng/tổng hợp),
+      // nhưng biểu đồ xu hướng sẽ lấy từ T1 đến tháng hiện tại của năm hiện tại
       return realData.monthlyRevenueStats.filter(
-        item => item.month === currentMonth && item.year === currentYear
+        item => item.month === selectedMonth && item.year === selectedYear
       );
-    } else if (period === "quarter") {
-      // Quý này
-      const quarter = Math.ceil(currentMonth / 3);
-      const startMonth = (quarter - 1) * 3 + 1;
-      const endMonth = quarter * 3;
+    } else if (periodType === "year") {
+      // Khi filter là năm, lấy tất cả tháng của năm đó
       return realData.monthlyRevenueStats.filter(
-        item =>
-          item.year === currentYear &&
-          item.month >= startMonth &&
-          item.month <= endMonth
-      );
-    } else if (period === "year") {
-      // Năm nay
-      return realData.monthlyRevenueStats.filter(
-        item => item.year === currentYear
+        item => item.year === selectedYear
       );
     }
     return [];
@@ -250,20 +269,25 @@ const RevenuePage = () => {
   // Sử dụng dữ liệu đã lọc cho các thống kê
   const filteredStats = getFilteredMonthlyStats();
 
-  // Biểu đồ doanh thu
-  const revenueData = filteredStats.length > 0 ? {
-    labels: filteredStats.map(item => getMonthName(item.month)),
+  // Biểu đồ doanh thu (xu hướng doanh thu) luôn là 12 tháng
+  let revenueData;
+  const stats = realData?.monthlyRevenueStats?.filter(item => item.year === selectedYear) || [];
+  revenueData = {
+    labels: Array.from({ length: 12 }, (_, i) => getMonthName(i + 1)),
     datasets: [
       {
         label: "Doanh thu thực tế",
-        data: filteredStats.map(item => item.revenue),
+        data: Array.from({ length: 12 }, (_, i) => {
+          const stat = stats.find(s => s.month === i + 1);
+          return stat ? stat.revenue : 0;
+        }),
         borderColor: "#4361ee",
         backgroundColor: "rgba(67, 97, 238, 0.1)",
         tension: 0.4,
         fill: true,
       },
     ],
-  } : fallbackRevenueData;
+  };
 
   // KPI values
   const totalRevenue = filteredStats.reduce((sum, item) => sum + item.revenue, 0);
@@ -272,7 +296,7 @@ const RevenuePage = () => {
   const totalReservation = filteredStats.reduce((sum, item) => sum + (item.reservationCount || 0), 0);
   const avgRevenue = filteredStats.length > 0 ? totalRevenue / filteredStats.length : 0;
 
-  // Hàm lọc dữ liệu kênh đặt phòng theo period
+  // Hàm lọc dữ liệu kênh đặt phòng theo periodType
   const getFilteredBookingChannelData = () => {
     if (!reservations || reservations.length === 0) {
       return {
@@ -284,45 +308,22 @@ const RevenuePage = () => {
         }]
       };
     }
-
-    const now = new Date();
-    const currentMonth = now.getMonth() + 1;
-    const currentYear = now.getFullYear();
-    
     let filteredReservations = [];
-    
-    if (period === "month") {
-      // Tháng này
+    if (periodType === "month") {
       filteredReservations = reservations.filter(res => {
         const createdAt = new Date(res.createdAt);
-        return createdAt.getFullYear() === currentYear && 
-               createdAt.getMonth() + 1 === currentMonth;
+        return createdAt.getFullYear() === selectedYear && createdAt.getMonth() + 1 === selectedMonth;
       });
-    } else if (period === "quarter") {
-      // Quý này
-      const quarter = Math.ceil(currentMonth / 3);
-      const startMonth = (quarter - 1) * 3 + 1;
-      const endMonth = quarter * 3;
+    } else if (periodType === "year") {
       filteredReservations = reservations.filter(res => {
         const createdAt = new Date(res.createdAt);
-        return createdAt.getFullYear() === currentYear && 
-               createdAt.getMonth() + 1 >= startMonth &&
-               createdAt.getMonth() + 1 <= endMonth;
-      });
-    } else if (period === "year") {
-      // Năm nay
-      filteredReservations = reservations.filter(res => {
-        const createdAt = new Date(res.createdAt);
-        return createdAt.getFullYear() === currentYear;
+        return createdAt.getFullYear() === selectedYear;
       });
     }
-    
     const websiteReservations = filteredReservations.filter(res => res.status !== "OFFLINE");
     const offlineReservations = filteredReservations.filter(res => res.status === "OFFLINE");
-    
     const websiteCount = websiteReservations.length;
     const offlineCount = offlineReservations.length;
-    
     return {
       labels: ["Đặt phòng qua website", "Đặt phòng offline"],
       datasets: [{
@@ -333,8 +334,15 @@ const RevenuePage = () => {
     };
   };
 
-  // Booking channel data - sử dụng dữ liệu đã lọc theo period
+  // Booking channel data - sử dụng dữ liệu đã lọc theo periodType
   const bookingChannelData = getFilteredBookingChannelData();
+  // Kiểm tra dữ liệu kênh đặt phòng có dữ liệu không
+  const hasBookingData = bookingChannelData.datasets[0].data.some(val => val > 0);
+
+  // UI filter mới
+  const years = getRecentYears(5);
+  // months: nếu là năm hiện tại thì chỉ list tới tháng hiện tại, nếu là năm trước thì đủ 12 tháng
+  const months = Array.from({ length: selectedYear === currentYear ? currentMonth : 12 }, (_, i) => ({ value: i + 1, label: `Tháng ${i + 1}` }));
 
   return (
     <>
@@ -345,16 +353,63 @@ const RevenuePage = () => {
             Theo dõi và phân tích doanh thu của khách sạn
           </p>
         </div>
-        <div className="d-flex">
+        <div className="d-flex align-items-center gap-2">
+          {/* Filter loại kỳ */}
           <select
             className="form-select form-select-sm me-2"
-            value={period}
-            onChange={e => setPeriod(e.target.value)}
+            value={periodType}
+            onChange={e => {
+              setPeriodType(e.target.value);
+              // Reset filter value khi đổi loại kỳ
+              if (e.target.value === "month") {
+                setSelectedMonth(new Date().getMonth() + 1);
+                setSelectedYear(new Date().getFullYear());
+              } else if (e.target.value === "year") {
+                setSelectedYear(new Date().getFullYear());
+              }
+            }}
+            style={{ width: 120 }}
           >
-            <option value="month">Tháng này</option>
-            <option value="quarter">Quý này</option>
-            <option value="year">Năm nay</option>
+            <option value="month">Tháng</option>
+            <option value="year">Năm</option>
           </select>
+          {/* Filter giá trị kỳ */}
+          {periodType === "month" && (
+            <>
+              <select
+                className="form-select form-select-sm me-2"
+                value={selectedMonth}
+                onChange={e => setSelectedMonth(Number(e.target.value))}
+                style={{ width: 110 }}
+              >
+                {months.map(m => (
+                  <option key={m.value} value={m.value}>{m.label}</option>
+                ))}
+              </select>
+              <select
+                className="form-select form-select-sm me-2"
+                value={selectedYear}
+                onChange={e => setSelectedYear(Number(e.target.value))}
+                style={{ width: 90 }}
+              >
+                {years.map(y => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+            </>
+          )}
+          {periodType === "year" && (
+            <select
+              className="form-select form-select-sm me-2"
+              value={selectedYear}
+              onChange={e => setSelectedYear(Number(e.target.value))}
+              style={{ width: 90 }}
+            >
+              {years.map(y => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+          )}
           <button className="btn btn-sm btn-outline-primary">
             <i className="bi bi-download me-1"></i> Xuất báo cáo
           </button>
@@ -368,7 +423,7 @@ const RevenuePage = () => {
             <div className="card h-100">
               <div className="card-body">
                 <h6 className="text-muted">
-                  {period === "month" ? "Doanh thu tháng hiện tại" : period === "quarter" ? "Doanh thu quý hiện tại" : "Tổng doanh thu năm nay"}
+                  {periodType === "month" ? "Doanh thu tháng hiện tại" : "Tổng doanh thu năm nay"}
                 </h6>
                 <h3 className="mb-0">
                   {formatCurrency(totalRevenue)}
@@ -392,7 +447,7 @@ const RevenuePage = () => {
             <div className="card h-100">
               <div className="card-body">
                 <h6 className="text-muted">
-                  {period === "month" ? "Trung bình tháng" : period === "quarter" ? "Trung bình quý" : "Trung bình năm"}
+                  {periodType === "month" ? "Trung bình tháng" : "Trung bình năm"}
                 </h6>
                 <h3 className="mb-0">
                   {formatCurrency(avgRevenue)}
@@ -420,7 +475,7 @@ const RevenuePage = () => {
                   {formatCurrency(totalActualAmount)}
                 </h3>
                 <small className="text-muted">
-                  {period === "month" ? "Tháng này" : period === "quarter" ? "Quý này" : "Năm nay"}
+                  {periodType === "month" ? "Tháng này" : "Năm nay"}
                 </small>
                 <div className="mt-2">
                   <small className="text-success">
@@ -497,7 +552,7 @@ const RevenuePage = () => {
           <div className="card h-100">
             <div className="card-body">
               <h5 className="card-title mb-4">
-                Kênh đặt phòng ({period === "month" ? "Tháng này" : period === "quarter" ? "Quý này" : "Năm nay"})
+                Kênh đặt phòng ({periodType === "month" ? "Tháng này" : "Năm nay"})
                 {reservations && reservations.length > 0 && (
                   <small className="text-success ms-2">
                     <i className="bi bi-check-circle"></i> Dữ liệu thực tế
@@ -510,34 +565,35 @@ const RevenuePage = () => {
                 )}
               </h5>
               <div className="chart-container">
-                <Pie
-                  data={bookingChannelData}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                      legend: {
-                        position: "bottom",
-                      },
-                      tooltip: {
-                        callbacks: {
-                          label: function(context) {
-                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                            const percentage = total > 0 ? ((context.parsed / total) * 100).toFixed(1) : 0;
-                            return context.label + ': ' + context.parsed + ' (' + percentage + '%)';
+                {hasBookingData ? (
+                  <Pie
+                    data={bookingChannelData}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: {
+                          position: "bottom",
+                        },
+                        tooltip: {
+                          callbacks: {
+                            label: function(context) {
+                              const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                              const percentage = total > 0 ? ((context.parsed / total) * 100).toFixed(1) : 0;
+                              return context.label + ': ' + context.parsed + ' (' + percentage + '%)';
+                            }
                           }
                         }
-                      }
-                    },
-                  }}
-                />
+                      },
+                    }}
+                  />
+                ) : (
+                  <div className="alert alert-info mt-3">
+                    <i className="bi bi-info-circle me-2"></i>
+                    Không có dữ liệu đặt phòng cho kỳ này.
+                  </div>
+                )}
               </div>
-              {(!reservations || reservations.length === 0) && (
-                <div className="alert alert-info mt-3">
-                  <i className="bi bi-info-circle me-2"></i>
-                  Dữ liệu sẽ được hiển thị khi có reservation trong hệ thống.
-                </div>
-              )}
             </div>
           </div>
         </div>
@@ -604,7 +660,7 @@ const RevenuePage = () => {
         <div className="card mb-4">
           <div className="card-body">
             <h5 className="card-title mb-4">
-              Chi tiết doanh thu ({period === "month" ? "Tháng này" : period === "quarter" ? "Quý này" : "Năm nay"})
+              Chi tiết doanh thu ({periodType === "month" ? "Tháng này" : "Năm nay"})
             </h5>
             <div className="table-responsive">
               <table className="table">
