@@ -11,6 +11,7 @@ import RoomUnitReducer from './room_unit/reducer';
 import SocketReducer from './socket/socketSlice';
 import BankInfoReducer from './bankInfo/reducer'; // Thêm import
 
+import DashboardReducer from './dashboard/reducer';
 import { Room } from '@utils/Routes';
 import roomReducer from './room/reducer';
 
@@ -27,6 +28,7 @@ const rootReducer = combineReducers({
     Socket: SocketReducer,
     RoomUnit: RoomUnitReducer,
     BankInfo: BankInfoReducer, // Thêm vào đây
+    Dashboard: DashboardReducer,
 });
 
 export default rootReducer;

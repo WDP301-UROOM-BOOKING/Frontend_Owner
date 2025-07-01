@@ -29,6 +29,8 @@ const ApiConstants = {
   RESERVATIONS: "/payment/reservations",
   //MONTHLYPAYMENT
   MONTHLY_PAYMENTS: "/monthly-payment/all",
+  //DASHBOARD
+  DASHBOARD_METRICS: "/dashboard-owner/metrics",
 
   //chat
   FETCH_CHAT_MESSAGE: "/chat/chat-history/:receiverId",
