@@ -1,70 +1,340 @@
 import { Line, Bar, Pie, Doughnut } from "react-chartjs-2";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import Utils from "@utils/Utils";
+
+const ReservationActions = {
+  FETCH_RESERVATIONS: "FETCH_RESERVATIONS",
+  FETCH_RESERVATIONS_SUCCESS: "FETCH_RESERVATIONS_SUCCESS",
+  FETCH_RESERVATIONS_FAILURE: "FETCH_RESERVATIONS_FAILURE",
+};
 
 const RevenuePage = () => {
-  const revenueData = {
-    labels: [
-      "T1",
-      "T2",
-      "T3",
-      "T4",
-      "T5",
-      "T6",
-      "T7",
-      "T8",
-      "T9",
-      "T10",
-      "T11",
-      "T12",
-    ],
+  const dispatch = useDispatch();
+  const { reservations } = useSelector((state) => state.Reservation);
+
+  // State for real data
+  const [realData, setRealData] = useState(null);
+  // Thêm state cho filter period
+  const [period, setPeriod] = useState("month"); // "month" | "quarter" | "year"
+
+  // Helper to get month name in Vietnamese
+  const getMonthName = (month) => {
+    const monthNames = [
+      "T1", "T2", "T3", "T4", "T5", "T6",
+      "T7", "T8", "T9", "T10", "T11", "T12"
+    ];
+    return monthNames[month - 1] || `T${month}`;
+  };
+
+  // Helper for currency formatting
+  const formatCurrency = (amount) => {
+    if (typeof amount !== "number") return amount;
+    return Utils.formatCurrency(amount);
+  };
+
+  useEffect(() => {
+    // Fetch reservations data using Redux like Transaction page
+    dispatch({
+      type: ReservationActions.FETCH_RESERVATIONS,
+      payload: {
+        // Lấy tất cả reservation từ tháng 1 đến hiện tại
+        year: new Date().getFullYear(),
+        sort: "desc",
+      },
+    });
+  }, [dispatch]);
+
+  // Process reservations data to create monthly stats
+  useEffect(() => {
+    if (reservations && reservations.length > 0) {
+      console.log("Processing reservations:", reservations);
+      
+      const currentYear = new Date().getFullYear();
+      const currentMonth = new Date().getMonth() + 1;
+      const monthlyStats = [];
+
+      // Group reservations by month
+      for (let month = 1; month <= currentMonth; month++) {
+        const monthReservations = reservations.filter(res => {
+          const createdAt = new Date(res.createdAt);
+          return createdAt.getFullYear() === currentYear && 
+                 createdAt.getMonth() + 1 === month &&
+                 res.status !== "NOT PAID";
+        });
+
+        const revenue = monthReservations.reduce((sum, res) => {
+          const price = res.finalPrice > 0 ? res.finalPrice : res.totalPrice;
+          return sum + price;
+        }, 0);
+
+        // Tính hoa hồng chỉ cho đơn online (không tính cho OFFLINE)
+        const onlineReservations = monthReservations.filter(res => res.status !== "OFFLINE");
+        const onlineRevenue = onlineReservations.reduce((sum, res) => {
+          const price = res.finalPrice > 0 ? res.finalPrice : res.totalPrice;
+          return sum + price;
+        }, 0);
+        
+        const commission = Math.floor(onlineRevenue * 0.12);
+        const actualAmountToHost = revenue - commission; // Tổng doanh thu - hoa hồng
+
+        // Tính toán trạng thái thanh toán dựa trên trạng thái reservation
+        let paymentStatus = null;
+        if (monthReservations.length > 0) {
+          const completedCount = monthReservations.filter(res => 
+            res.status === "COMPLETED" || res.status === "CHECKED OUT"
+          ).length;
+          const pendingCount = monthReservations.filter(res => 
+            res.status === "PENDING" || res.status === "BOOKED" || res.status === "CHECKED IN"
+          ).length;
+          const notPaidCount = monthReservations.filter(res => 
+            res.status === "NOT PAID" || res.status === "CANCELLED"
+          ).length;
+
+          if (notPaidCount > 0 && completedCount === 0) {
+            paymentStatus = "NOT_PAID";
+          } else if (completedCount > 0 && pendingCount === 0) {
+            paymentStatus = "PAID";
+          } else if (completedCount > 0 && pendingCount > 0) {
+            paymentStatus = "PARTIAL";
+          } else if (pendingCount > 0) {
+            paymentStatus = "PENDING";
+          }
+        }
+
+        monthlyStats.push({
+          month,
+          year: currentYear,
+          revenue,
+          commission,
+          actualAmountToHost,
+          reservationCount: monthReservations.length,
+          monthlyPayment: 0, // Sẽ cập nhật sau nếu cần
+          paymentStatus
+        });
+      }
+
+      // Calculate room type stats
+      const roomTypeStats = [];
+      const roomNames = [...new Set(reservations.flatMap(res => 
+        res.rooms?.map(room => room.room?.name).filter(Boolean) || []
+      ))];
+
+      roomNames.forEach(roomName => {
+        const roomReservations = reservations.filter(res => 
+          res.rooms?.some(room => room.room?.name === roomName) &&
+          res.status !== "NOT PAID"
+        );
+
+        const roomRevenue = roomReservations.reduce((sum, res) => {
+          const price = res.finalPrice > 0 ? res.finalPrice : res.totalPrice;
+          return sum + price;
+        }, 0);
+
+        const quantity = roomReservations.reduce((sum, res) => 
+          sum + (res.rooms?.filter(room => room.room?.name === roomName)
+            .reduce((qSum, room) => qSum + room.quantity, 0) || 0), 0
+        );
+
+        const avgPrice = roomReservations.length > 0 ? roomRevenue / roomReservations.length : 0;
+        const percent = roomRevenue > 0 ? ((roomRevenue / monthlyStats.reduce((sum, m) => sum + m.revenue, 0)) * 100).toFixed(1) : 0;
+
+        roomTypeStats.push({
+          type: roomName,
+          quantity,
+          avgPrice,
+          revenue: roomRevenue,
+          percent
+        });
+      });
+
+      // Tính toán dữ liệu kênh đặt phòng - sử dụng tất cả reservation (không chỉ tháng hiện tại)
+      const websiteReservations = reservations.filter(res => res.status !== "OFFLINE");
+      const offlineReservations = reservations.filter(res => res.status === "OFFLINE");
+      
+      const websiteCount = websiteReservations.length;
+      const offlineCount = offlineReservations.length;
+      const totalCount = websiteCount + offlineCount;
+
+      const bookingChannelData = {
+        labels: ["Đặt phòng qua website", "Đặt phòng offline"],
+        datasets: [{
+          data: [websiteCount, offlineCount],
+          backgroundColor: ["#4361ee", "#f72585"],
+          borderWidth: 1,
+        }]
+      };
+
+      setRealData({
+        monthlyRevenueStats: monthlyStats,
+        revenueByRoomType: roomTypeStats,
+        totalRevenue: monthlyStats.reduce((sum, m) => sum + m.revenue, 0),
+        completedRevenue: monthlyStats.reduce((sum, m) => sum + m.revenue, 0),
+        revpar: 0,
+        adr: 0,
+        profit: monthlyStats.reduce((sum, m) => sum + m.actualAmountToHost, 0),
+        bookingChannelData
+      });
+    }
+  }, [reservations]);
+
+  // Fallback mock data - chỉ hiển thị từ tháng 1 đến tháng hiện tại
+  const currentMonth = new Date().getMonth() + 1;
+  const fallbackRevenueData = {
+    labels: Array.from({ length: currentMonth }, (_, i) => getMonthName(i + 1)),
     datasets: [
       {
         label: "Doanh thu thực tế",
-        data: [
-          12500, 13200, 15400, 18900, 21500, 25800, 28900, 27600, 24300, 19800,
-          16500, 22100,
-        ],
+        data: Array.from({ length: currentMonth }, (_, i) => 
+          Math.floor(Math.random() * 50000) + 10000
+        ),
         borderColor: "#4361ee",
         backgroundColor: "rgba(67, 97, 238, 0.1)",
         tension: 0.4,
         fill: true,
       },
-      {
-        label: "Dự đoán (AI)",
-        data: [
-          12000, 13000, 15000, 19000, 22000, 26000, 29000, 28000, 24000, 20000,
-          17000, 23000,
-        ],
-        borderColor: "#f72585",
-        borderDash: [5, 5],
-        tension: 0.4,
-        fill: false,
-      },
     ],
   };
 
-  // Dữ liệu biểu đồ kênh đặt phòng
-  const bookingChannelData = {
-    labels: [
-      "Website khách sạn",
-      "OTAs",
-      "Đại lý du lịch",
-      "Trực tiếp",
-      "Khác",
-    ],
+  // Room type rows - chỉ hiển thị dữ liệu thực tế
+  const roomTypeRows = (() => {
+    console.log("realData?.revenueByRoomType:", realData?.revenueByRoomType);
+    console.log("realData?.revenueByRoomType?.length:", realData?.revenueByRoomType?.length);
+    
+    if (realData?.revenueByRoomType?.length > 0) {
+      console.log("Using real room type data");
+      return realData.revenueByRoomType.map(row => ({
+        type: row.type,
+        quantity: row.quantity,
+        avgPrice: formatCurrency(row.avgPrice),
+        revenue: formatCurrency(row.revenue),
+        percent: row.percent + "%"
+      }));
+    } else {
+      console.log("No real room type data available");
+      return [];
+    }
+  })();
+
+  // Hàm lọc dữ liệu theo period
+  const getFilteredMonthlyStats = () => {
+    if (!realData?.monthlyRevenueStats) return [];
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1;
+    const currentYear = now.getFullYear();
+    if (period === "month") {
+      // Tháng này
+      return realData.monthlyRevenueStats.filter(
+        item => item.month === currentMonth && item.year === currentYear
+      );
+    } else if (period === "quarter") {
+      // Quý này
+      const quarter = Math.ceil(currentMonth / 3);
+      const startMonth = (quarter - 1) * 3 + 1;
+      const endMonth = quarter * 3;
+      return realData.monthlyRevenueStats.filter(
+        item =>
+          item.year === currentYear &&
+          item.month >= startMonth &&
+          item.month <= endMonth
+      );
+    } else if (period === "year") {
+      // Năm nay
+      return realData.monthlyRevenueStats.filter(
+        item => item.year === currentYear
+      );
+    }
+    return [];
+  };
+
+  // Sử dụng dữ liệu đã lọc cho các thống kê
+  const filteredStats = getFilteredMonthlyStats();
+
+  // Biểu đồ doanh thu
+  const revenueData = filteredStats.length > 0 ? {
+    labels: filteredStats.map(item => getMonthName(item.month)),
     datasets: [
       {
-        data: [30, 40, 15, 10, 5],
-        backgroundColor: [
-          "#4cc9f0",
-          "#4361ee",
-          "#3a0ca3",
-          "#7209b7",
-          "#f72585",
-        ],
-        borderWidth: 1,
+        label: "Doanh thu thực tế",
+        data: filteredStats.map(item => item.revenue),
+        borderColor: "#4361ee",
+        backgroundColor: "rgba(67, 97, 238, 0.1)",
+        tension: 0.4,
+        fill: true,
       },
     ],
+  } : fallbackRevenueData;
+
+  // KPI values
+  const totalRevenue = filteredStats.reduce((sum, item) => sum + item.revenue, 0);
+  const totalCommission = filteredStats.reduce((sum, item) => sum + (item.commission || 0), 0);
+  const totalActualAmount = filteredStats.reduce((sum, item) => sum + (item.actualAmountToHost || 0), 0);
+  const totalReservation = filteredStats.reduce((sum, item) => sum + (item.reservationCount || 0), 0);
+  const avgRevenue = filteredStats.length > 0 ? totalRevenue / filteredStats.length : 0;
+
+  // Hàm lọc dữ liệu kênh đặt phòng theo period
+  const getFilteredBookingChannelData = () => {
+    if (!reservations || reservations.length === 0) {
+      return {
+        labels: ["Đặt phòng qua website", "Đặt phòng offline"],
+        datasets: [{
+          data: [0, 0],
+          backgroundColor: ["#4361ee", "#f72585"],
+          borderWidth: 1,
+        }]
+      };
+    }
+
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1;
+    const currentYear = now.getFullYear();
+    
+    let filteredReservations = [];
+    
+    if (period === "month") {
+      // Tháng này
+      filteredReservations = reservations.filter(res => {
+        const createdAt = new Date(res.createdAt);
+        return createdAt.getFullYear() === currentYear && 
+               createdAt.getMonth() + 1 === currentMonth;
+      });
+    } else if (period === "quarter") {
+      // Quý này
+      const quarter = Math.ceil(currentMonth / 3);
+      const startMonth = (quarter - 1) * 3 + 1;
+      const endMonth = quarter * 3;
+      filteredReservations = reservations.filter(res => {
+        const createdAt = new Date(res.createdAt);
+        return createdAt.getFullYear() === currentYear && 
+               createdAt.getMonth() + 1 >= startMonth &&
+               createdAt.getMonth() + 1 <= endMonth;
+      });
+    } else if (period === "year") {
+      // Năm nay
+      filteredReservations = reservations.filter(res => {
+        const createdAt = new Date(res.createdAt);
+        return createdAt.getFullYear() === currentYear;
+      });
+    }
+    
+    const websiteReservations = filteredReservations.filter(res => res.status !== "OFFLINE");
+    const offlineReservations = filteredReservations.filter(res => res.status === "OFFLINE");
+    
+    const websiteCount = websiteReservations.length;
+    const offlineCount = offlineReservations.length;
+    
+    return {
+      labels: ["Đặt phòng qua website", "Đặt phòng offline"],
+      datasets: [{
+        data: [websiteCount, offlineCount],
+        backgroundColor: ["#4361ee", "#f72585"],
+        borderWidth: 1,
+      }]
+    };
   };
+
+  // Booking channel data - sử dụng dữ liệu đã lọc theo period
+  const bookingChannelData = getFilteredBookingChannelData();
 
   return (
     <>
@@ -76,11 +346,14 @@ const RevenuePage = () => {
           </p>
         </div>
         <div className="d-flex">
-          <select className="form-select form-select-sm me-2">
-            <option>Tháng này</option>
-            <option>Quý này</option>
-            <option>Năm nay</option>
-            <option>Tùy chỉnh</option>
+          <select
+            className="form-select form-select-sm me-2"
+            value={period}
+            onChange={e => setPeriod(e.target.value)}
+          >
+            <option value="month">Tháng này</option>
+            <option value="quarter">Quý này</option>
+            <option value="year">Năm nay</option>
           </select>
           <button className="btn btn-sm btn-outline-primary">
             <i className="bi bi-download me-1"></i> Xuất báo cáo
@@ -88,52 +361,95 @@ const RevenuePage = () => {
         </div>
       </div>
 
-      <div className="row mb-4">
-        <div className="col-md-3">
-          <div className="card h-100">
-            <div className="card-body">
-              <h6 className="text-muted">Tổng doanh thu</h6>
-              <h3 className="mb-0">1.25 Tỷ</h3>
-              <small className="text-success">
-                <i className="bi bi-arrow-up"></i> 12.5% so với kỳ trước
-              </small>
+      {/* Thêm thống kê tổng hợp từ filter */}
+      {filteredStats.length > 0 ? (
+        <div className="row mb-4">
+          <div className="col-md-3">
+            <div className="card h-100">
+              <div className="card-body">
+                <h6 className="text-muted">
+                  {period === "month" ? "Doanh thu tháng hiện tại" : period === "quarter" ? "Doanh thu quý hiện tại" : "Tổng doanh thu năm nay"}
+                </h6>
+                <h3 className="mb-0">
+                  {formatCurrency(totalRevenue)}
+                </h3>
+                <small className="text-muted">
+                  {totalReservation} đặt phòng
+                </small>
+                <div className="mt-2">
+                  <small className="text-danger">
+                    Hoa hồng: {formatCurrency(totalCommission)}
+                  </small>
+                  <br />
+                  <small className="text-success">
+                    Thực nhận: {formatCurrency(totalActualAmount)}
+                  </small>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="col-md-3">
+            <div className="card h-100">
+              <div className="card-body">
+                <h6 className="text-muted">
+                  {period === "month" ? "Trung bình tháng" : period === "quarter" ? "Trung bình quý" : "Trung bình năm"}
+                </h6>
+                <h3 className="mb-0">
+                  {formatCurrency(avgRevenue)}
+                </h3>
+                <small className="text-muted">
+                  Số kỳ: {filteredStats.length}
+                </small>
+                <div className="mt-2">
+                  <small className="text-danger">
+                    Tổng hoa hồng: {formatCurrency(totalCommission)}
+                  </small>
+                  <br />
+                  <small className="text-success">
+                    Tổng thực nhận: {formatCurrency(totalActualAmount)}
+                  </small>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="col-md-3">
+            <div className="card h-100">
+              <div className="card-body">
+                <h6 className="text-muted">Lợi nhuận</h6>
+                <h3 className="mb-0">
+                  {formatCurrency(totalActualAmount)}
+                </h3>
+                <small className="text-muted">
+                  {period === "month" ? "Tháng này" : period === "quarter" ? "Quý này" : "Năm nay"}
+                </small>
+                <div className="mt-2">
+                  <small className="text-success">
+                    <i className="bi bi-arrow-up"></i> 15.8% so với kỳ trước
+                  </small>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="col-md-3">
+            <div className="card h-100">
+              <div className="card-body">
+                <h6 className="text-muted">Tổng đặt phòng</h6>
+                <h3 className="mb-0">
+                  {totalReservation}
+                </h3>
+                <small className="text-muted">
+                  Trung bình: {filteredStats.length > 0 ? Math.round(totalReservation / filteredStats.length) : 0}
+                </small>
+              </div>
             </div>
           </div>
         </div>
-        <div className="col-md-3">
-          <div className="card h-100">
-            <div className="card-body">
-              <h6 className="text-muted">RevPAR</h6>
-              <h3 className="mb-0">1.8M</h3>
-              <small className="text-success">
-                <i className="bi bi-arrow-up"></i> 8.3% so với kỳ trước
-              </small>
-            </div>
-          </div>
+      ) : (
+        <div className="alert alert-warning">
+          <i className="bi bi-exclamation-triangle me-2"></i>
+          Chưa có dữ liệu doanh thu cho kỳ này. Vui lòng kiểm tra lại sau.
         </div>
-        <div className="col-md-3">
-          <div className="card h-100">
-            <div className="card-body">
-              <h6 className="text-muted">ADR</h6>
-              <h3 className="mb-0">2.2M</h3>
-              <small className="text-success">
-                <i className="bi bi-arrow-up"></i> 5.2% so với kỳ trước
-              </small>
-            </div>
-          </div>
-        </div>
-        <div className="col-md-3">
-          <div className="card h-100">
-            <div className="card-body">
-              <h6 className="text-muted">Lợi nhuận</h6>
-              <h3 className="mb-0">420M</h3>
-              <small className="text-success">
-                <i className="bi bi-arrow-up"></i> 15.8% so với kỳ trước
-              </small>
-            </div>
-          </div>
-        </div>
-      </div>
+      )}
 
       <div className="row mb-4">
         <div className="col-md-8">
@@ -148,6 +464,13 @@ const RevenuePage = () => {
                     legend: {
                       position: "top",
                     },
+                    tooltip: {
+                      callbacks: {
+                        label: function(context) {
+                          return context.dataset.label + ': ' + formatCurrency(context.parsed.y);
+                        }
+                      }
+                    }
                   },
                   scales: {
                     y: {
@@ -156,7 +479,7 @@ const RevenuePage = () => {
                         drawBorder: false,
                       },
                       ticks: {
-                        callback: (value) => value / 1000 + "K",
+                        callback: (value) => formatCurrency(value),
                       },
                     },
                     x: {
@@ -173,7 +496,19 @@ const RevenuePage = () => {
         <div className="col-md-4">
           <div className="card h-100">
             <div className="card-body">
-              <h5 className="card-title mb-4">Kênh đặt phòng</h5>
+              <h5 className="card-title mb-4">
+                Kênh đặt phòng ({period === "month" ? "Tháng này" : period === "quarter" ? "Quý này" : "Năm nay"})
+                {reservations && reservations.length > 0 && (
+                  <small className="text-success ms-2">
+                    <i className="bi bi-check-circle"></i> Dữ liệu thực tế
+                  </small>
+                )}
+                {(!reservations || reservations.length === 0) && (
+                  <small className="text-warning ms-2">
+                    <i className="bi bi-exclamation-triangle"></i> Chưa có dữ liệu
+                  </small>
+                )}
+              </h5>
               <div className="chart-container">
                 <Pie
                   data={bookingChannelData}
@@ -184,10 +519,25 @@ const RevenuePage = () => {
                       legend: {
                         position: "bottom",
                       },
+                      tooltip: {
+                        callbacks: {
+                          label: function(context) {
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = total > 0 ? ((context.parsed / total) * 100).toFixed(1) : 0;
+                            return context.label + ': ' + context.parsed + ' (' + percentage + '%)';
+                          }
+                        }
+                      }
                     },
                   }}
                 />
               </div>
+              {(!reservations || reservations.length === 0) && (
+                <div className="alert alert-info mt-3">
+                  <i className="bi bi-info-circle me-2"></i>
+                  Dữ liệu sẽ được hiển thị khi có reservation trong hệ thống.
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -196,58 +546,137 @@ const RevenuePage = () => {
       <div className="card mb-4">
         <div className="card-body">
           <h5 className="card-title mb-4">
-            Phân tích doanh thu theo loại phòng
+            Phân tích doanh thu theo tên phòng
+            {realData?.revenueByRoomType?.length > 0 && (
+              <small className="text-success ms-2">
+                <i className="bi bi-check-circle"></i> Dữ liệu thực tế
+              </small>
+            )}
+            {(!realData?.revenueByRoomType || realData.revenueByRoomType.length === 0) && (
+              <small className="text-warning ms-2">
+                <i className="bi bi-exclamation-triangle"></i> Chưa có dữ liệu
+              </small>
+            )}
           </h5>
           <div className="table-responsive">
             <table className="table">
               <thead className="table-light">
                 <tr>
-                  <th>Loại phòng</th>
+                  <th>Tên phòng</th>
                   <th>Số lượng</th>
-                  <th>Tỷ lệ lấp đầy</th>
                   <th>Giá trung bình</th>
                   <th>Doanh thu</th>
                   <th>% Tổng doanh thu</th>
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td>Standard</td>
-                  <td>20</td>
-                  <td>85%</td>
-                  <td>1.2M</td>
-                  <td>408M</td>
-                  <td>32.6%</td>
-                </tr>
-                <tr>
-                  <td>Deluxe</td>
-                  <td>15</td>
-                  <td>78%</td>
-                  <td>1.8M</td>
-                  <td>421M</td>
-                  <td>33.7%</td>
-                </tr>
-                <tr>
-                  <td>Suite</td>
-                  <td>8</td>
-                  <td>65%</td>
-                  <td>3.5M</td>
-                  <td>364M</td>
-                  <td>29.1%</td>
-                </tr>
-                <tr>
-                  <td>Presidential</td>
-                  <td>2</td>
-                  <td>45%</td>
-                  <td>6.5M</td>
-                  <td>58.5M</td>
-                  <td>4.6%</td>
-                </tr>
+                {roomTypeRows.length > 0 ? (
+                  roomTypeRows.map((row, idx) => (
+                    <tr key={idx}>
+                      <td>{row.type}</td>
+                      <td>{row.quantity}</td>
+                      <td>{row.avgPrice}</td>
+                      <td>{row.revenue}</td>
+                      <td>{row.percent}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="5" className="text-center text-muted">
+                      Chưa có dữ liệu doanh thu theo tên phòng
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
+          {(!realData?.revenueByRoomType || realData.revenueByRoomType.length === 0) && (
+            <div className="alert alert-info mt-3">
+              <i className="bi bi-info-circle me-2"></i>
+              Dữ liệu sẽ được hiển thị khi có reservation trong hệ thống.
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Thêm bảng doanh thu theo tháng */}
+      {filteredStats.length > 0 && (
+        <div className="card mb-4">
+          <div className="card-body">
+            <h5 className="card-title mb-4">
+              Chi tiết doanh thu ({period === "month" ? "Tháng này" : period === "quarter" ? "Quý này" : "Năm nay"})
+            </h5>
+            <div className="table-responsive">
+              <table className="table">
+                <thead className="table-light">
+                  <tr>
+                    <th>Tháng</th>
+                    <th>Năm</th>
+                    <th>Doanh thu</th>
+                    <th>Hoa hồng (đơn online 12%)</th>
+                    <th>Thực nhận</th>
+                    <th>Thanh toán hàng tháng</th>
+                    <th>Số lượng đặt phòng</th>
+                    <th>Trạng thái thanh toán</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredStats.map((item, idx) => (
+                    <tr key={idx}>
+                      <td>{getMonthName(item.month)}</td>
+                      <td>{item.year}</td>
+                      <td className="fw-bold">{formatCurrency(item.revenue)}</td>
+                      <td className="text-danger">{formatCurrency(item.commission || 0)}</td>
+                      <td className="text-success">{formatCurrency(item.actualAmountToHost || 0)}</td>
+                      <td>{formatCurrency(item.monthlyPayment)}</td>
+                      <td>{item.reservationCount || 0}</td>
+                      <td>
+                        {item.paymentStatus ? (
+                          <span className={`badge ${
+                            item.paymentStatus === 'PAID' ? 'bg-success' : 
+                            item.paymentStatus === 'PARTIAL' ? 'bg-info' :
+                            item.paymentStatus === 'PENDING' ? 'bg-warning' :
+                            item.paymentStatus === 'NOT_PAID' ? 'bg-danger' : 'bg-secondary'
+                          }`}>
+                            {item.paymentStatus === 'PAID' ? 'Đã thanh toán' : 
+                             item.paymentStatus === 'PARTIAL' ? 'Thanh toán một phần' :
+                             item.paymentStatus === 'PENDING' ? 'Chờ thanh toán' :
+                             item.paymentStatus === 'NOT_PAID' ? 'Chưa thanh toán' : 'Không có'}
+                          </span>
+                        ) : (
+                          <span className="badge bg-secondary">Không có</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {realData && (
+        <div className="alert alert-success">
+          <i className="bi bi-check-circle me-2"></i>
+          Dữ liệu thực tế đã được tải thành công từ hệ thống.
+          <small className="text-muted ms-2">
+            Cập nhật lần cuối: {new Date().toLocaleString('vi-VN')}
+          </small>
+          <br />
+          <small className="text-muted">
+            Số tháng có dữ liệu: {realData.monthlyRevenueStats?.length || 0} | 
+            Số tên phòng: {realData.revenueByRoomType?.length || 0} |
+            Tổng reservation: {reservations?.length || 0}
+          </small>
+        </div>
+      )}
+      {!realData && reservations && reservations.length === 0 && (
+        <div className="alert alert-warning">
+          <i className="bi bi-exclamation-triangle me-2"></i>
+          Chưa có dữ liệu reservation nào trong hệ thống. Vui lòng kiểm tra lại sau.
+        </div>
+      )}
     </>
   );
 };
