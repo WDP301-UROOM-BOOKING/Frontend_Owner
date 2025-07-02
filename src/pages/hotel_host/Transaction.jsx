@@ -383,7 +383,6 @@ const Transaction = () => {
                         <option value="CHECKED OUT">CHECKED OUT</option>
                         <option value="CHECKED IN">CHECKED IN</option>
                         <option value="BOOKED">BOOKED</option>
-                        <option value="PENDING">PENDING</option>
                         <option value="CANCELLED">CANCELLED</option>
                         <option value="NOT PAID">NOT PAID</option>
                         <option value="OFFLINE">OFFLINE</option>
