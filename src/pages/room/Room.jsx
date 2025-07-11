@@ -16,13 +16,14 @@ import Utils from "@utils/Utils";
 import { roomFacilities, bedTypes } from "@utils/data";
 import { useAppSelector } from "@redux/store";
 import ConfirmationModal from "@components/ConfirmationModal";
-import { toast } from 'react-toastify'; // Add this import if not already imported
+import 'react-toastify/dist/ReactToastify.css';
+import { showToast, ToastProvider } from "@components/ToastContainer";
 
 function Room({ show, handleClose, onSave, editingRoom }) {
   const [formData, setFormData] = useState({
     name: "",
     type: "Phòng đơn",
-    price: 120000,
+    price: 1000,
     capacity: 1,
     description: "",
     quantity: 1,
@@ -83,7 +84,7 @@ function Room({ show, handleClose, onSave, editingRoom }) {
       setFormData({
         name: editingRoom.name || "",
         type: editingRoom.type || "Phòng đơn",
-        price: editingRoom.price || 120000,
+        price: editingRoom.price || 1000,
         capacity: editingRoom.capacity || 1,
         description: editingRoom.description || "",
         quantity: editingRoom.quantity || 1,
@@ -96,7 +97,7 @@ function Room({ show, handleClose, onSave, editingRoom }) {
       setFormData({
         name: "",
         type: "Phòng đơn",
-        price: 120000,
+        price: 1000,
         capacity: 1,
         description: "",
         quantity: 1,
@@ -223,7 +224,7 @@ function Room({ show, handleClose, onSave, editingRoom }) {
     const totalImages = formData.images.length + previewImages.length;
     
     if (totalImages <= 5) {
-      toast.error("Phòng phải có ít nhất 5 ảnh!");
+      showToast.error("Phòng phải có ít nhất 5 ảnh!");
       return;
     }
 
@@ -242,7 +243,7 @@ function Room({ show, handleClose, onSave, editingRoom }) {
     const totalImages = formData.images.length + previewImages.length;
     
     if (totalImages <= 5) {
-      toast.error("Phòng phải có ít nhất 5 ảnh!");
+      showToast.error("Phòng phải có ít nhất 5 ảnh!");
       return;
     }
 
@@ -255,44 +256,95 @@ function Room({ show, handleClose, onSave, editingRoom }) {
   // Update validateForm function
   const validateForm = () => {
     const newErrors = {};
+    let isValid = true;
 
+    // Validate name
     if (!formData.name.trim()) {
       newErrors.name = "Tên phòng là bắt buộc";
+      showToast.error("Vui lòng nhập tên phòng");
+      isValid = false;
     }
 
+    // Validate type
     if (!formData.type.trim()) {
       newErrors.type = "Loại phòng là bắt buộc";
+      showToast.error("Vui lòng chọn loại phòng");
+      isValid = false;
     }
 
+    // Validate description
     if (!formData.description.trim()) {
       newErrors.description = "Mô tả phòng là bắt buộc";
+      showToast.error("Vui lòng nhập mô tả phòng");
+      isValid = false;
     }
 
+    // Validate price
     if (formData.price <= 0) {
       newErrors.price = "Giá phòng phải lớn hơn 0";
+      showToast.error("Giá phòng phải lớn hơn 0");
+      isValid = false;
     }
 
+    // Validate capacity
     if (formData.capacity <= 0) {
       newErrors.capacity = "Sức chứa phải lớn hơn 0";
+      showToast.error("Sức chứa phải lớn hơn 0");
+      isValid = false;
     }
 
+    // Validate quantity
     if (formData.quantity <= 0) {
       newErrors.quantity = "Số lượng phòng phải lớn hơn 0";
+      showToast.error("Số lượng phòng phải lớn hơn 0");
+      isValid = false;
+    }
+
+    // Validate beds
+    if (formData.bed.length === 0) {
+      newErrors.bed = "Vui lòng thêm ít nhất một loại giường";
+      showToast.error("Vui lòng thêm ít nhất một loại giường");
+      isValid = false;
+    } else {
+      // Check if any bed is missing required fields
+      const invalidBed = formData.bed.some(bed => !bed.bed || bed.quantity <= 0);
+      if (invalidBed) {
+        newErrors.bed = "Vui lòng điền đầy đủ thông tin giường";
+        showToast.error("Vui lòng điền đầy đủ thông tin giường");
+        isValid = false;
+      }
+    }
+
+    // Validate facilities
+    if (formData.facilities.length === 0) {
+      newErrors.facilities = "Vui lòng chọn ít nhất một tiện nghi";
+      showToast.error("Vui lòng chọn ít nhất một tiện nghi");
+      isValid = false;
     }
 
     // Check minimum images requirement
     const totalImages = formData.images.length + previewImages.length;
     if (totalImages < 5) {
       newErrors.images = "Phòng phải có ít nhất 5 ảnh";
-      toast.error("Phòng phải có ít nhất 5 ảnh!");
+      showToast.error("Phòng phải có ít nhất 5 ảnh!");
+      isValid = false;
     }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    
+    if (!isValid) {
+      showToast.error("Vui lòng điền đầy đủ thông tin bắt buộc!");
+    }
+
+    return isValid;
   };
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async () => {
     if (validateForm()) {
+      if (isSubmitting) return; // Prevent multiple submissions
+      setIsSubmitting(true);
       setIsUploadingImages(true);
 
       try {
@@ -320,14 +372,15 @@ function Room({ show, handleClose, onSave, editingRoom }) {
         };
 
         await onSave(roomData);
-        setIsUploadingImages(false);
       } catch (error) {
-        setIsUploadingImages(false);
         console.error("Error saving room:", error);
+      } finally {
+        setIsUploadingImages(false);
+        setIsSubmitting(false);
+        setShowUpdateModal(false);
+        handleClose();
       }
     }
-    setShowUpdateModal(false);
-    handleClose();
   };
 
   // Helper function to check if a facility is selected
@@ -349,504 +402,507 @@ function Room({ show, handleClose, onSave, editingRoom }) {
 
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   return (
-    <Modal show={show} onHide={handleClose} size="lg" centered>
-      <ConfirmationModal
-        show={showUpdateModal}
-        onHide={() => setShowUpdateModal(false)}
-        onConfirm={handleSubmit}
-        title="Confirm Update"
-        message="Are you sure you want to update this room?"
-        confirmButtonText="Update"
-        type="warning"
-      />
-      <Modal.Header closeButton>
-        <Modal.Title>
-          {editingRoom ? "Chỉnh sửa loại phòng" : "Thêm loại phòng mới"}
-        </Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <Form>
-          {/* Room Name */}
-          <Form.Group className="mb-3">
-            <Form.Label>Tên phòng *</Form.Label>
-            <Form.Control
-              type="text"
-              placeholder="Nhập tên phòng"
-              value={formData.name}
-              onChange={(e) => handleInputChange("name", e.target.value)}
-              isInvalid={!!errors.name}
-            />
-            <Form.Control.Feedback type="invalid">
-              {errors.name}
-            </Form.Control.Feedback>
-          </Form.Group>
+    <>
+      <ToastProvider />
+      <Modal show={show} onHide={handleClose} size="lg" centered>
+        <ConfirmationModal
+          show={showUpdateModal}
+          onHide={() => setShowUpdateModal(false)}
+          onConfirm={handleSubmit}
+          title="Confirm Update"
+          message= {editingRoom ? "Bạn có chắc chắn muốn cập nhật loại phòng này?" : "Bạn có chắc chắn muốn thêm loại phòng mới?"}
+          confirmButtonText= {editingRoom ? "Cập nhật phòng" : "Thêm phòng"}
+          type="warning"
+        />
+        <Modal.Header closeButton>
+          <Modal.Title>
+            {editingRoom ? "Chỉnh sửa loại phòng" : "Thêm loại phòng mới"}
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            {/* Room Name */}
+            <Form.Group className="mb-3">
+              <Form.Label>Tên phòng *</Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="Nhập tên phòng"
+                value={formData.name}
+                onChange={(e) => handleInputChange("name", e.target.value)}
+                isInvalid={!!errors.name}
+              />
+              <Form.Control.Feedback type="invalid">
+                {errors.name}
+              </Form.Control.Feedback>
+            </Form.Group>
 
-          {/* Room Type */}
-          <Form.Group className="mb-3">
-            <Form.Label>Loại phòng *</Form.Label>
-            <Form.Select
-              value={formData.type}
-              onChange={(e) => handleInputChange("type", e.target.value)}
-              isInvalid={!!errors.type}
-            >
-              {roomTypes.map((type) => (
-                <option key={type} value={type}>
-                  {type}
-                </option>
-              ))}
-            </Form.Select>
-            <Form.Control.Feedback type="invalid">
-              {errors.type}
-            </Form.Control.Feedback>
-          </Form.Group>
+            {/* Room Type */}
+            <Form.Group className="mb-3">
+              <Form.Label>Loại phòng *</Form.Label>
+              <Form.Select
+                value={formData.type}
+                onChange={(e) => handleInputChange("type", e.target.value)}
+                isInvalid={!!errors.type}
+              >
+                {roomTypes.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </Form.Select>
+              <Form.Control.Feedback type="invalid">
+                {errors.type}
+              </Form.Control.Feedback>
+            </Form.Group>
 
-          {/* Price and Capacity */}
-          <Row>
-            <Col md={6}>
-              <Form.Group className="mb-3">
-                <Form.Label>Giá phòng/đêm (VND) *</Form.Label>
-                <Form.Control
-                  type="number"
-                  min="0"
-                  value={formData.price}
-                  onChange={(e) => handleInputChange("price", e.target.value)}
-                  isInvalid={!!errors.price}
-                />
-                <Form.Control.Feedback type="invalid">
-                  {errors.price}
-                </Form.Control.Feedback>
-              </Form.Group>
-            </Col>
-            <Col md={6}>
-              <Form.Group className="mb-3">
-                <Form.Label>Sức chứa (người) *</Form.Label>
-                <Form.Control
-                  type="number"
-                  min="1"
-                  value={formData.capacity}
-                  onChange={(e) =>
-                    handleInputChange("capacity", e.target.value)
-                  }
-                  isInvalid={!!errors.capacity}
-                />
-                <Form.Control.Feedback type="invalid">
-                  {errors.capacity}
-                </Form.Control.Feedback>
-              </Form.Group>
-            </Col>
-          </Row>
-
-          {/* Quantity */}
-          <Form.Group className="mb-3">
-            <Form.Label>Số lượng phòng *</Form.Label>
-            <Form.Control
-              type="number"
-              min="1"
-              value={formData.quantity}
-              onChange={(e) => handleInputChange("quantity", e.target.value)}
-              isInvalid={!!errors.quantity}
-              //disabled={editingRoom}
-            />
-            <Form.Control.Feedback type="invalid">
-              {errors.quantity}
-            </Form.Control.Feedback>
-          </Form.Group>
-
-          {/* Description */}
-          <Form.Group className="mb-3">
-            <Form.Label>Mô tả phòng *</Form.Label>
-            <Form.Control
-              as="textarea"
-              rows={3}
-              placeholder="Nhập mô tả chi tiết về phòng"
-              value={formData.description}
-              onChange={(e) => handleInputChange("description", e.target.value)}
-              isInvalid={!!errors.description}
-            />
-            <Form.Control.Feedback type="invalid">
-              {errors.description}
-            </Form.Control.Feedback>
-          </Form.Group>
-
-          {/* Beds */}
-          <Form.Group className="mb-3">
-            <Form.Label>Loại giường</Form.Label>
-            {formData.bed.map((bed, index) => (
-              <Row key={index} className="mb-2">
-                <Col md={6}>
-                  <Form.Select
-                    value={bed.bedId || bed.bed || ""}
-                    onChange={(e) =>
-                      handleBedChange(index, "bed", e.target.value)
-                    }
-                  >
-                    <option value="0">Chọn loại giường</option>
-                    {bedTypes
-                      .filter((bedType) => {
-                        // Show the bed type if:
-                        // 1. It's not selected in any other bed selection
-                        // 2. OR it's the current bed selection
-                        const isSelectedInOtherBeds = formData.bed.some(
-                          (selectedBed, selectedIndex) =>
-                            selectedIndex !== index &&
-                            (selectedBed.bedId === bedType._id || selectedBed.bed === bedType._id)
-                        );
-                        return !isSelectedInOtherBeds;
-                      })
-                      .map((bedType) => (
-                        <option key={bedType._id} value={bedType._id}>
-                          {bedType.name} - {bedType.bedWidth}
-                        </option>
-                      ))}
-                  </Form.Select>
-                </Col>
-                <Col md={4}>
+            {/* Price and Capacity */}
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Giá phòng/đêm ($) *</Form.Label>
+                  <Form.Control
+                    type="number"
+                    min="0"
+                    value={formData.price}
+                    onChange={(e) => handleInputChange("price", e.target.value)}
+                    isInvalid={!!errors.price}
+                  />
+                  <Form.Control.Feedback type="invalid">
+                    {errors.price}
+                  </Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Sức chứa (người) *</Form.Label>
                   <Form.Control
                     type="number"
                     min="1"
-                    placeholder="Số lượng"
-                    value={bed.quantity}
+                    value={formData.capacity}
                     onChange={(e) =>
-                      handleBedChange(index, "quantity", e.target.value)
+                      handleInputChange("capacity", e.target.value)
                     }
+                    isInvalid={!!errors.capacity}
                   />
-                </Col>
-                <Col md={2}>
-                  <Button
-                    variant="outline-danger"
-                    size="sm"
-                    onClick={() => removeBed(index)}
-                  >
-                    Xóa
-                  </Button>
-                </Col>
-              </Row>
-            ))}
+                  <Form.Control.Feedback type="invalid">
+                    {errors.capacity}
+                  </Form.Control.Feedback>
+                </Form.Group>
+              </Col>
+            </Row>
 
-            {/* Display selected beds summary */}
-            {formData.bed.length > 0 && (
-              <div
-                className="mt-2 p-2"
-                style={{ backgroundColor: "#f8f9fa", borderRadius: "5px" }}
-              >
-                <small className="text-muted">
-                  <strong>Giường đã chọn:</strong>
-                  <ul className="mb-0 mt-1">
-                    {formData.bed.map((bed, index) => (
-                      <li key={index}>
-                        {getBedNameById(bed.bed)} x {bed.quantity}
-                      </li>
-                    ))}
-                  </ul>
-                </small>
-              </div>
-            )}
-            <br></br>
-            <Button
-              variant="outline-primary"
-              size="sm"
-              onClick={addBed}
-              className="mt-2"
-              disabled={formData.bed.length >= bedTypes.length}
-            >
-              + Thêm giường
-            </Button>
-          </Form.Group>
+            {/* Quantity */}
+            <Form.Group className="mb-3">
+              <Form.Label>Số lượng phòng *</Form.Label>
+              <Form.Control
+                type="number"
+                min="1"
+                value={formData.quantity}
+                onChange={(e) => handleInputChange("quantity", e.target.value)}
+                isInvalid={!!errors.quantity}
+                //disabled={editingRoom}
+              />
+              <Form.Control.Feedback type="invalid">
+                {errors.quantity}
+              </Form.Control.Feedback>
+            </Form.Group>
 
-          {/* Facilities */}
-          <Form.Group className="mb-3">
-            <Form.Label>Tiện nghi</Form.Label>
-            <div
-              style={{
-                maxHeight: "400px",
-                overflowY: "auto",
-                border: "1px solid #dee2e6",
-                borderRadius: "8px",
-                padding: "15px",
-                backgroundColor: "#f8f9fa",
-              }}
-            >
-              <Row>
-                {roomFacilities.map((facility) => (
-                  <Col md={6} key={facility.name} className="mb-2">
-                    <Form.Check
-                      type="checkbox"
-                      id={`facility-${facility.name}`}
-                      label={
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "flex-start",
-                            gap: "10px",
-                          }}
-                        >
-                          <facility.iconTemp
-                            style={{
-                              color: isFacilitySelected(facility.name)
-                                ? "#0071c2"
-                                : "#6c757d",
-                              fontSize: "18px",
-                              marginTop: "2px",
-                              transition: "color 0.3s ease",
-                            }}
-                          />
-                          <div>
-                            <div
-                              style={{
-                                fontWeight: isFacilitySelected(facility.name)
-                                  ? "700"
-                                  : "600",
-                                fontSize: "14px",
-                                color: isFacilitySelected(facility.name)
-                                  ? "#0071c2"
-                                  : "#333",
-                              }}
-                            >
-                              {facility.name}
-                            </div>
-                            <small
-                              style={{
-                                color: "#6c757d",
-                                fontSize: "12px",
-                                lineHeight: "1.3",
-                              }}
-                            >
-                              {facility.description}
-                            </small>
-                          </div>
-                        </div>
-                      }
-                      checked={isFacilitySelected(facility.name)}
+            {/* Description */}
+            <Form.Group className="mb-3">
+              <Form.Label>Mô tả phòng *</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={3}
+                placeholder="Nhập mô tả chi tiết về phòng"
+                value={formData.description}
+                onChange={(e) => handleInputChange("description", e.target.value)}
+                isInvalid={!!errors.description}
+              />
+              <Form.Control.Feedback type="invalid">
+                {errors.description}
+              </Form.Control.Feedback>
+            </Form.Group>
+
+            {/* Beds */}
+            <Form.Group className="mb-3">
+              <Form.Label>Loại giường</Form.Label>
+              {formData.bed.map((bed, index) => (
+                <Row key={index} className="mb-2">
+                  <Col md={6}>
+                    <Form.Select
+                      value={bed.bedId || bed.bed || ""}
                       onChange={(e) =>
-                        handleFacilityChange(facility.name, e.target.checked)
+                        handleBedChange(index, "bed", e.target.value)
                       }
-                      style={{ marginBottom: "8px" }}
+                    >
+                      <option value="0">Chọn loại giường</option>
+                      {bedTypes
+                        .filter((bedType) => {
+                          // Show the bed type if:
+                          // 1. It's not selected in any other bed selection
+                          // 2. OR it's the current bed selection
+                          const isSelectedInOtherBeds = formData.bed.some(
+                            (selectedBed, selectedIndex) =>
+                              selectedIndex !== index &&
+                              (selectedBed.bedId === bedType._id || selectedBed.bed === bedType._id)
+                          );
+                          return !isSelectedInOtherBeds;
+                        })
+                        .map((bedType) => (
+                          <option key={bedType._id} value={bedType._id}>
+                            {bedType.name} - {bedType.bedWidth}
+                          </option>
+                        ))}
+                    </Form.Select>
+                  </Col>
+                  <Col md={4}>
+                    <Form.Control
+                      type="number"
+                      min="1"
+                      placeholder="Số lượng"
+                      value={bed.quantity}
+                      onChange={(e) =>
+                        handleBedChange(index, "quantity", e.target.value)
+                      }
                     />
                   </Col>
-                ))}
-              </Row>
-            </div>
-            <small className="text-muted mt-2 d-block">
-              Đã chọn: <strong>{formData.facilities.length}</strong> tiện nghi
-              {formData.facilities.length > 0 && (
-                <span className="ms-2">({formData.facilities.join(", ")})</span>
+                  <Col md={2}>
+                    <Button
+                      variant="outline-danger"
+                      size="sm"
+                      onClick={() => removeBed(index)}
+                    >
+                      Xóa
+                    </Button>
+                  </Col>
+                </Row>
+              ))}
+
+              {/* Display selected beds summary */}
+              {formData.bed.length > 0 && (
+                <div
+                  className="mt-2 p-2"
+                  style={{ backgroundColor: "#f8f9fa", borderRadius: "5px" }}
+                >
+                  <small className="text-muted">
+                    <strong>Giường đã chọn:</strong>
+                    <ul className="mb-0 mt-1">
+                      {formData.bed.map((bed, index) => (
+                        <li key={index}>
+                          {getBedNameById(bed.bed)} x {bed.quantity}
+                        </li>
+                      ))}
+                    </ul>
+                  </small>
+                </div>
               )}
-            </small>
-          </Form.Group>
+              <br></br>
+              <Button
+                variant="outline-primary"
+                size="sm"
+                onClick={addBed}
+                className="mt-2"
+                disabled={formData.bed.length >= bedTypes.length}
+              >
+                + Thêm giường
+              </Button>
+            </Form.Group>
 
-          {/* Images */}
-          <Form.Group className="mb-3">
-            <Form.Label>Hình ảnh phòng *</Form.Label>
-            <Form.Control
-              type="file"
-              multiple
-              accept="image/*"
-              onChange={handleImageChange}
-              disabled={isUploadingImages}
-            />
-            <Form.Text className="text-muted">
-              Ảnh sẽ được upload lên Cloudinary. <strong>Tối thiểu 5 ảnh.</strong>
-            </Form.Text>
-
-            {/* Show current image count */}
-            <div className="mt-2">
-              <small className="text-muted">
-                Tổng số ảnh: <strong>{formData.images.length + previewImages.length}</strong> 
-                {(formData.images.length + previewImages.length) < 5 && (
-                  <span className="text-danger ms-2">
-                    (Cần thêm {5 - (formData.images.length + previewImages.length)} ảnh)
-                  </span>
-                )}
-                {(formData.images.length + previewImages.length) >= 5 && (
-                  <span className="text-success ms-2">✓ Đủ số lượng ảnh</span>
-                )}
-              </small>
-            </div>
-
-            {/* Loading indicator */}
-            {isUploadingImages && (
+            {/* Facilities */}
+            <Form.Group className="mb-3">
+              <Form.Label>Tiện nghi</Form.Label>
               <div
-                className="mt-3 p-3"
                 style={{
-                  backgroundColor: "#f8f9fa",
-                  borderRadius: "8px",
+                  maxHeight: "400px",
+                  overflowY: "auto",
                   border: "1px solid #dee2e6",
+                  borderRadius: "8px",
+                  padding: "15px",
+                  backgroundColor: "#f8f9fa",
                 }}
               >
-                <div className="d-flex align-items-center mb-2">
-                  <Spinner animation="border" size="sm" className="me-2" />
-                  <span>Đang upload ảnh... {uploadProgress}%</span>
-                </div>
-                <div className="progress" style={{ height: "8px" }}>
-                  <div
-                    className="progress-bar"
-                    role="progressbar"
-                    style={{ width: `${uploadProgress}%` }}
-                    aria-valuenow={uploadProgress}
-                    aria-valuemin="0"
-                    aria-valuemax="100"
-                  ></div>
-                </div>
-              </div>
-            )}
-
-            {/* Show preview images (newly selected images) */}
-            {previewImages.length > 0 && (
-              <div className="mt-3">
-                <small className="text-muted d-block mb-2">
-                  <strong>Ảnh mới chọn ({previewImages.length}):</strong>
-                </small>
-                <Row className="mt-2">
-                  {previewImages.map((preview, index) => (
-                    <Col md={3} key={`preview-${index}`} className="mb-2">
-                      <div style={{ position: "relative" }}>
-                        <img
-                          src={preview}
-                          alt={`Preview ${index + 1}`}
-                          style={{
-                            width: "100%",
-                            height: "100px",
-                            objectFit: "cover",
-                            borderRadius: "5px",
-                            border: "2px solid #007bff", // Blue border for new images
-                          }}
-                        />
-                        <Button
-                          variant="danger"
-                          size="sm"
-                          style={{
-                            position: "absolute",
-                            top: "5px",
-                            right: "5px",
-                            padding: "2px 6px",
-                          }}
-                          onClick={() => removePreviewImage(index)}
-                          disabled={isUploadingImages || (formData.images.length + previewImages.length <= 5)}
-                          title={(formData.images.length + previewImages.length <= 5) ? "Không thể xóa - cần tối thiểu 5 ảnh" : "Xóa ảnh"}
-                        >
-                          ×
-                        </Button>
-                        <div
-                          style={{
-                            position: "absolute",
-                            bottom: "5px",
-                            left: "5px",
-                            backgroundColor: "rgba(0, 123, 255, 0.8)",
-                            color: "white",
-                            padding: "2px 6px",
-                            borderRadius: "3px",
-                            fontSize: "10px",
-                            fontWeight: "bold",
-                          }}
-                        >
-                          MỚI
-                        </div>
-                      </div>
+                <Row>
+                  {roomFacilities.map((facility) => (
+                    <Col md={6} key={facility.name} className="mb-2">
+                      <Form.Check
+                        type="checkbox"
+                        id={`facility-${facility.name}`}
+                        label={
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "flex-start",
+                              gap: "10px",
+                            }}
+                          >
+                            <facility.iconTemp
+                              style={{
+                                color: isFacilitySelected(facility.name)
+                                  ? "#0071c2"
+                                  : "#6c757d",
+                                fontSize: "18px",
+                                marginTop: "2px",
+                                transition: "color 0.3s ease",
+                              }}
+                            />
+                            <div>
+                              <div
+                                style={{
+                                  fontWeight: isFacilitySelected(facility.name)
+                                    ? "700"
+                                    : "600",
+                                  fontSize: "14px",
+                                  color: isFacilitySelected(facility.name)
+                                    ? "#0071c2"
+                                    : "#333",
+                                }}
+                              >
+                                {facility.name}
+                              </div>
+                              <small
+                                style={{
+                                  color: "#6c757d",
+                                  fontSize: "12px",
+                                  lineHeight: "1.3",
+                                }}
+                              >
+                                {facility.description}
+                              </small>
+                            </div>
+                          </div>
+                        }
+                        checked={isFacilitySelected(facility.name)}
+                        onChange={(e) =>
+                          handleFacilityChange(facility.name, e.target.checked)
+                        }
+                        style={{ marginBottom: "8px" }}
+                      />
                     </Col>
                   ))}
                 </Row>
               </div>
-            )}
-
-            {/* Show existing images for edit mode */}
-            {formData.images.length > 0 && (
-              <div className="mt-3">
-                <small className="text-muted d-block mb-2">
-                  <strong>Ảnh hiện tại ({formData.images.length}):</strong>
-                </small>
-                <Row className="mt-2">
-                  {formData.images.map((image, index) => (
-                    <Col md={3} key={`existing-${index}`} className="mb-2">
-                      <div style={{ position: "relative" }}>
-                        <img
-                          src={image}
-                          alt={`Room ${index + 1}`}
-                          style={{
-                            width: "100%",
-                            height: "100px",
-                            objectFit: "cover",
-                            borderRadius: "5px",
-                            border: "1px solid #dee2e6", // Gray border for existing images
-                          }}
-                        />
-                        <Button
-                          variant="danger"
-                          size="sm"
-                          style={{
-                            position: "absolute",
-                            top: "5px",
-                            right: "5px",
-                            padding: "2px 6px",
-                          }}
-                          onClick={() => removeImage(index)}
-                          disabled={isUploadingImages || (formData.images.length + previewImages.length <= 5)}
-                          title={(formData.images.length + previewImages.length <= 5) ? "Không thể xóa - cần tối thiểu 5 ảnh" : "Xóa ảnh"}
-                        >
-                          ×
-                        </Button>
-                      </div>
-                    </Col>
-                  ))}
-                </Row>
-              </div>
-            )}
-
-            {/* Error message for images */}
-            {errors.images && (
-              <div className="text-danger mt-2 small">
-                {errors.images}
-              </div>
-            )}
-          </Form.Group>
-
-          {/* Status - only show in edit mode */}
-          {editingRoom && (
-            <Form.Group className="mb-3">
-              <Form.Label>Trạng thái</Form.Label>
-              <Form.Select
-                disabled={true}
-                value={formData.statusActive}
-                onChange={(e) =>
-                  handleInputChange("statusActive", e.target.value)
-                }
-              >
-                <option value="ACTIVE">Hoạt động</option>
-                <option value="NONACTIVE">Không hoạt động</option>
-              </Form.Select>
+              <small className="text-muted mt-2 d-block">
+                Đã chọn: <strong>{formData.facilities.length}</strong> tiện nghi
+                {formData.facilities.length > 0 && (
+                  <span className="ms-2">({formData.facilities.join(", ")})</span>
+                )}
+              </small>
             </Form.Group>
-          )}
-        </Form>
-      </Modal.Body>
-      <Modal.Footer>
-        <Button
-          variant="secondary"
-          onClick={() => {
-            handleClose();
-          }}
-          disabled={isUploadingImages}
-        >
-          Hủy
-        </Button>
-        <Button
-          variant="primary"
-          onClick={() => {
-            setShowUpdateModal(true);
-          }}
-          disabled={isUploadingImages}
-        >
-          {isUploadingImages ? (
-            <>
-              <Spinner animation="border" size="sm" className="me-2" />
-              Đang xử lý...
-            </>
-          ) : editingRoom ? (
-            "Cập nhật"
-          ) : (
-            "Thêm phòng"
-          )}
-        </Button>
-      </Modal.Footer>
-    </Modal>
+
+            {/* Images */}
+            <Form.Group className="mb-3">
+              <Form.Label>Hình ảnh phòng *</Form.Label>
+              <Form.Control
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={handleImageChange}
+                disabled={isUploadingImages}
+              />
+              <Form.Text className="text-muted">
+                Ảnh sẽ được upload lên Cloudinary. <strong>Tối thiểu 5 ảnh.</strong>
+              </Form.Text>
+
+              {/* Show current image count */}
+              <div className="mt-2">
+                <small className="text-muted">
+                  Tổng số ảnh: <strong>{formData.images.length + previewImages.length}</strong> 
+                  {(formData.images.length + previewImages.length) < 5 && (
+                    <span className="text-danger ms-2">
+                      (Cần thêm {5 - (formData.images.length + previewImages.length)} ảnh)
+                    </span>
+                  )}
+                  {(formData.images.length + previewImages.length) >= 5 && (
+                    <span className="text-success ms-2">✓ Đủ số lượng ảnh</span>
+                  )}
+                </small>
+              </div>
+
+              {/* Loading indicator */}
+              {isUploadingImages && (
+                <div
+                  className="mt-3 p-3"
+                  style={{
+                    backgroundColor: "#f8f9fa",
+                    borderRadius: "8px",
+                    border: "1px solid #dee2e6",
+                  }}
+                >
+                  <div className="d-flex align-items-center mb-2">
+                    <Spinner animation="border" size="sm" className="me-2" />
+                    <span>Đang upload ảnh... {uploadProgress}%</span>
+                  </div>
+                  <div className="progress" style={{ height: "8px" }}>
+                    <div
+                      className="progress-bar"
+                      role="progressbar"
+                      style={{ width: `${uploadProgress}%` }}
+                      aria-valuenow={uploadProgress}
+                      aria-valuemin="0"
+                      aria-valuemax="100"
+                    ></div>
+                  </div>
+                </div>
+              )}
+
+              {/* Show preview images (newly selected images) */}
+              {previewImages.length > 0 && (
+                <div className="mt-3">
+                  <small className="text-muted d-block mb-2">
+                    <strong>Ảnh mới chọn ({previewImages.length}):</strong>
+                  </small>
+                  <Row className="mt-2">
+                    {previewImages.map((preview, index) => (
+                      <Col md={3} key={`preview-${index}`} className="mb-2">
+                        <div style={{ position: "relative" }}>
+                          <img
+                            src={preview}
+                            alt={`Preview ${index + 1}`}
+                            style={{
+                              width: "100%",
+                              height: "100px",
+                              objectFit: "cover",
+                              borderRadius: "5px",
+                              border: "2px solid #007bff", // Blue border for new images
+                            }}
+                          />
+                          <Button
+                            variant="danger"
+                            size="sm"
+                            style={{
+                              position: "absolute",
+                              top: "5px",
+                              right: "5px",
+                              padding: "2px 6px",
+                            }}
+                            onClick={() => removePreviewImage(index)}
+                            disabled={isUploadingImages || (formData.images.length + previewImages.length <= 5)}
+                            title={(formData.images.length + previewImages.length <= 5) ? "Không thể xóa - cần tối thiểu 5 ảnh" : "Xóa ảnh"}
+                          >
+                            ×
+                          </Button>
+                          <div
+                            style={{
+                              position: "absolute",
+                              bottom: "5px",
+                              left: "5px",
+                              backgroundColor: "rgba(0, 123, 255, 0.8)",
+                              color: "white",
+                              padding: "2px 6px",
+                              borderRadius: "3px",
+                              fontSize: "10px",
+                              fontWeight: "bold",
+                            }}
+                          >
+                            MỚI
+                          </div>
+                        </div>
+                      </Col>
+                    ))}
+                  </Row>
+                </div>
+              )}
+
+              {/* Show existing images for edit mode */}
+              {formData.images.length > 0 && (
+                <div className="mt-3">
+                  <small className="text-muted d-block mb-2">
+                    <strong>Ảnh hiện tại ({formData.images.length}):</strong>
+                  </small>
+                  <Row className="mt-2">
+                    {formData.images.map((image, index) => (
+                      <Col md={3} key={`existing-${index}`} className="mb-2">
+                        <div style={{ position: "relative" }}>
+                          <img
+                            src={image}
+                            alt={`Room ${index + 1}`}
+                            style={{
+                              width: "100%",
+                              height: "100px",
+                              objectFit: "cover",
+                              borderRadius: "5px",
+                              border: "1px solid #dee2e6", // Gray border for existing images
+                            }}
+                          />
+                          <Button
+                            variant="danger"
+                            size="sm"
+                            style={{
+                              position: "absolute",
+                              top: "5px",
+                              right: "5px",
+                              padding: "2px 6px",
+                            }}
+                            onClick={() => removeImage(index)}
+                            disabled={isUploadingImages || (formData.images.length + previewImages.length <= 5)}
+                            title={(formData.images.length + previewImages.length <= 5) ? "Không thể xóa - cần tối thiểu 5 ảnh" : "Xóa ảnh"}
+                          >
+                            ×
+                          </Button>
+                        </div>
+                      </Col>
+                    ))}
+                  </Row>
+                </div>
+              )}
+
+              {/* Error message for images */}
+              {errors.images && (
+                <div className="text-danger mt-2 small">
+                  {errors.images}
+                </div>
+              )}
+            </Form.Group>
+
+            {/* Status - only show in edit mode */}
+            {editingRoom && (
+              <Form.Group className="mb-3">
+                <Form.Label>Trạng thái</Form.Label>
+                <Form.Select
+                  disabled={true}
+                  value={formData.statusActive}
+                  onChange={(e) =>
+                    handleInputChange("statusActive", e.target.value)
+                  }
+                >
+                  <option value="ACTIVE">Hoạt động</option>
+                  <option value="NONACTIVE">Không hoạt động</option>
+                </Form.Select>
+              </Form.Group>
+            )}
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              handleClose();
+            }}
+            disabled={isUploadingImages || isSubmitting}
+          >
+            Hủy
+          </Button>
+          <Button
+            variant="primary"
+            onClick={() => {
+              setShowUpdateModal(true);
+            }}
+            disabled={isUploadingImages || isSubmitting}
+          >
+            {isUploadingImages || isSubmitting ? (
+              <>
+                <Spinner animation="border" size="sm" className="me-2" />
+                Đang xử lý...
+              </>
+            ) : editingRoom ? (
+              "Cập nhật"
+            ) : (
+              "Thêm phòng"
+            )}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    </>
   );
 }
 
