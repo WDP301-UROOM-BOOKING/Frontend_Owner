@@ -157,20 +157,6 @@ function App() {
             <li className="nav-item">
               <a
                 className={`nav-link ${
-                  activeTab === "bookings" ? "active" : ""
-                }`}
-                href="#"
-                onClick={() => {
-                  setActiveTab("bookings");
-                }}
-              >
-                <i className="bi bi-calendar-check nav-icon"></i>
-                <span>Đặt phòng</span>
-              </a>
-            </li>
-            <li className="nav-item">
-              <a
-                className={`nav-link ${
                   activeTab === "management_bookings" ? "active" : ""
                 }`}
                 href="#"
