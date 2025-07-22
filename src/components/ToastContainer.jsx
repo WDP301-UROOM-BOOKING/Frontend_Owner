@@ -34,3 +34,4 @@ export const showToast = {
 export const ToastProvider = () => (
   <ToastContainer newestOnTop pauseOnFocusLoss />
 );
+
