@@ -21,8 +21,8 @@ const LoginHotelPage = () => {
   const [isResending, setIsResending] = useState(false);
   const [unverifiedEmail, setUnverifiedEmail] = useState("");
   const [formData, setFormData] = useState({
-    email: "hot1@gm.com",
-    password: "12345678",
+    email: "",
+    password: "",
     rememberMe: false,
   });
 

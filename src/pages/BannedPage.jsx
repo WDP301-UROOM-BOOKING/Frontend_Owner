@@ -1,12 +1,44 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Container, Button } from 'react-bootstrap';
 import { FaLock } from 'react-icons/fa';
 import '../css/BannedPage.css'
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import * as Routers from "@utils/Routes";
+import { useAppSelector } from "@redux/store";
+
+function getUnlockCountdown(lockExpiresAt) {
+  if (!lockExpiresAt) return null;
+  const now = new Date();
+  const expires = new Date(lockExpiresAt);
+  const diffMs = expires - now;
+  if (diffMs <= 0) return null;
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+  return { diffDays, diffHours, diffMinutes };
+}
 
 const BannedPage = () => {
-  const navigate= useNavigate();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const Auth = useAppSelector((state) => state.Auth.Auth);
+  const reasonLocked = location.state?.reasonLocked || "Violation of standards";
+  const lockDuration = location.state?.lockDuration;
+  const lockExpiresAt = location.state?.lockExpiresAt;
+  const [countdown, setCountdown] = useState(() =>
+    lockDuration && lockDuration !== "permanent"
+      ? getUnlockCountdown(lockExpiresAt)
+      : null
+  );
+
+  useEffect(() => {
+    if (lockDuration && lockDuration !== "permanent" && lockExpiresAt) {
+      const interval = setInterval(() => {
+        setCountdown(getUnlockCountdown(lockExpiresAt));
+      }, 60000); // cập nhật mỗi phút
+      return () => clearInterval(interval);
+    }
+  }, [lockDuration, lockExpiresAt]);
 
   return (
     <Container fluid className="banned-container">
@@ -21,25 +53,50 @@ const BannedPage = () => {
         <div className="banned-details">
           <div className="detail-item">
             <span className="detail-label">Reason: </span>
-            <span className="detail-value" style={{color: 'red'}}>Violation of standards</span>
+            <span className="detail-value" style={{color: 'red'}}>
+              {reasonLocked}
+            </span>
           </div>
+
+          {countdown && typeof countdown === "object" ? (
+            <div className="detail-item">
+              <span className="detail-label">Time remaining: </span>
+              <span className="detail-value" style={{color: 'orange'}}>
+                {countdown.diffDays > 0 ? `${countdown.diffDays} days, ` : ''}
+                {countdown.diffHours} hours, {countdown.diffMinutes} minutes
+              </span>
+            </div>
+          ) : null}
           
           <div className="detail-item">
             <span className="detail-label">Date locked: </span>
-            <span className="detail-value">12:03:01 20/10/2025</span>
+            <span className="detail-value">{location.state?.dateLocked || "Unknown"}</span>
           </div>
         </div>
         
         <div className="banned-actions">
           <Button
+            variant="primary"
+            className="home-btn"
+            style={{width: '140px'}}
             onClick={() => {
-              navigate(Routers.HomeHotel)
+              navigate(Routers.HomeHotel);
             }}
-            variant="primary" className="home-btn" style={{width: '140px'}}
           >
             Home Page
           </Button>
-          <Button variant="danger" className="contact-btn" style={{width: '140px'}}>
+          <Button
+            variant="danger"
+            className="contact-btn"
+            style={{width: '140px'}}
+            onClick={() => {
+              if (Auth?._id != -1) {
+                navigate(Routers.LoginHotelPage);
+              } else {
+                navigate(Routers.LoginHotelPage);
+              }
+            }}
+          >
             Contact
           </Button>
         </div>
