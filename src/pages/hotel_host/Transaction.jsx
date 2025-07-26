@@ -295,12 +295,23 @@ const Transaction = () => {
     0
   );
 
+  // Thêm vào phần tính toán tổng ở trên
+  const totalPromotionDiscount = reservations?.reduce(
+    (sum, r) => sum + (r.promotionDiscount || 0), 
+    0
+  );
+
+  const totalAfterDiscount = reservations?.reduce(
+    (sum, r) => sum + (r.promotionDiscount > 0 ? r.finalPrice : r.totalPrice),
+    0
+  );
+
   // Commission only calculated for online reservations
-  const totalCommission = Math.floor(onlineTotalPaid * 0.12);
+  const totalCommission = Math.floor(totalAfterDiscount * 0.12);
 
   // Host amount: online reservations (88%) + offline reservations (100%)
   const totalAmountToHost =
-    Math.floor(onlineTotalPaid * 0.88) + offlineTotalPaid;
+    Math.floor(totalAfterDiscount * 0.88) + offlineTotalPaid;
 
   const completedCount =
     reservations?.filter(
@@ -413,7 +424,9 @@ const Transaction = () => {
             <Card.Body>
               <div className="d-flex justify-content-between mb-2">
                 <span>Tổng thanh toán của khách:</span>
-                <strong>{Utils.formatCurrency(totalCustomerPaid)}</strong>
+                <strong>
+                  {Utils.formatCurrency(totalAfterDiscount)} {/* Đã bao gồm giảm giá */}
+                </strong>
               </div>
               <div className="d-flex justify-content-between mb-2">
                 <span>Tổng hoa hồng (Admin):</span>
@@ -483,28 +496,41 @@ const Transaction = () => {
                           <span>
                             {reservation.rooms &&
                               reservation.rooms.length > 0 &&
-                              reservation.rooms.map((roomObj, idx) => {
-                                console.log("ABC: ", roomObj);
-                                return (
-                                  <div key={idx}>
-                                    {roomObj.room?.name} - {roomObj.quantity}{" "}
-                                    rooms
-                                  </div>
-                                );
-                              })}
+                              reservation.rooms.map((roomObj, idx) => (
+                                <div key={idx}>
+                                  {roomObj.room?.name} - {roomObj.quantity} rooms
+                                </div>
+                              ))}
                           </span>
                         </td>
                         <td>
-                          {Utils.formatCurrency(reservation.totalPrice || 0)}
+                          {reservation.promotionDiscount == 0 && (
+                            <>
+                              {Utils.formatCurrency(reservation.totalPrice || 0)}
+                            </>
+                          )}
+                          {reservation.promotionDiscount > 0 && (
+                            <>
+                              {Utils.formatCurrency(reservation.finalPrice)}
+                            </>
+                          )}
                         </td>
                         <td className="text-danger">
                           {Utils.formatCurrency(
-                            Math.floor(reservation.totalPrice * 0.12 || 0)
+                            Math.floor(
+                              (reservation.promotionDiscount > 0 
+                                ? reservation.finalPrice 
+                                : reservation.totalPrice) * 0.12 || 0
+                            )
                           )}
                         </td>
                         <td className="text-success">
                           {Utils.formatCurrency(
-                            Math.floor(reservation.totalPrice * 0.88 || 0)
+                            Math.floor(
+                              (reservation.promotionDiscount > 0
+                                ? reservation.finalPrice
+                                : reservation.totalPrice) * 0.88 || 0
+                            )
                           )}
                         </td>
                         <td>
@@ -513,7 +539,7 @@ const Transaction = () => {
                               reservation.status === "COMPLETED"
                                 ? "bg-secondary"
                                 : reservation.status === "PENDING"
-                                ? "bg-warning"
+                                ? "bg-warning" 
                                 : reservation.status === "CANCELLED" ||
                                   reservation.status === "NOT PAID"
                                 ? "bg-danger"
@@ -615,13 +641,23 @@ const Transaction = () => {
                   <strong>Tổng:</strong>
                 </td>
                 <td>
-                  <strong>{Utils.formatCurrency(totalCustomerPaid)}</strong>
+                  {totalPromotionDiscount > 0 && (
+                    <>
+                      <span className="text-success" style={{fontWeight: 'bold'}}>
+                        {Utils.formatCurrency(totalAfterDiscount)}
+                      </span>
+                    </>
+                  )}
                 </td>
                 <td>
-                  <strong>{Utils.formatCurrency(totalCommission)}</strong>
+                  <strong>
+                    {Utils.formatCurrency(Math.floor(totalAfterDiscount * 0.12))}
+                  </strong>
                 </td>
                 <td>
-                  <strong>{Utils.formatCurrency(totalAmountToHost)}</strong>
+                  <strong>
+                    {Utils.formatCurrency(Math.floor(totalAfterDiscount * 0.88))}
+                  </strong>
                 </td>
                 <td></td>
               </tr>

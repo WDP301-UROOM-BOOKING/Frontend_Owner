@@ -247,11 +247,13 @@ const TransactionDetail = ({ detailReservation, show, handleClose }) => {
                     <h5>III. BOOKING INFORMATION</h5>
                   </Col>
                 </Row>
+
+                {/* Booking Information Table */}
                 <Table bordered>
                   <thead>
                     <tr>
                       <th>STT</th>
-                      <th>Rooms and Services</th>
+                      <th>Rooms and Services</th> 
                       <th>Quantity</th>
                       <th>Price</th>
                     </tr>
@@ -259,7 +261,7 @@ const TransactionDetail = ({ detailReservation, show, handleClose }) => {
                   <tbody>
                     {/* Rooms */}
                     {detailReservation?.rooms &&
-                    Array.isArray(detailReservation.rooms) ? (
+                      Array.isArray(detailReservation.rooms) ? (
                       detailReservation.rooms.map((roomItem, index) => {
                         const nights = (() => {
                           if (!detailReservation.checkInDate || !detailReservation.checkOutDate) return 1;
@@ -274,7 +276,7 @@ const TransactionDetail = ({ detailReservation, show, handleClose }) => {
                           <tr key={`room-${index}`}>
                             <td>{index + 1}</td>
                             <td>
-                              <strong>Room:</strong> {roomItem.room?.name || "Phòng"}
+                              <strong>Room:</strong> {roomItem.room?.name || "Room"}
                               <br />
                               <small className="text-muted">
                                 {formatCurrency(roomItem.room?.price || 0)} × {roomItem.quantity} room × {nights} nights
@@ -282,7 +284,7 @@ const TransactionDetail = ({ detailReservation, show, handleClose }) => {
                             </td>
                             <td>
                               {roomItem.quantity || 1}
-                              <br />
+                              <br/>
                               <small className="text-muted">× {nights} nights</small>
                             </td>
                             <td>
@@ -297,13 +299,13 @@ const TransactionDetail = ({ detailReservation, show, handleClose }) => {
 
                     {/* Services */}
                     {detailReservation?.services &&
-                    Array.isArray(detailReservation.services) &&
-                    detailReservation.services.length > 0 ? (
+                      Array.isArray(detailReservation.services) &&
+                      detailReservation.services.length > 0 ? (
                       detailReservation.services.map((serviceItem, index) => (
                         <tr key={`service-${index}`}>
                           <td>{(detailReservation.rooms?.length || 0) + index + 1}</td>
                           <td>
-                            <strong>Service:</strong> {serviceItem.service?.name || "Dịch vụ"}
+                            <strong>Service:</strong> {serviceItem.service?.name || "Service"}
                             <br />
                             <small className="text-muted">
                               Dates: {serviceItem.selectDate?.map(date => 
@@ -320,7 +322,8 @@ const TransactionDetail = ({ detailReservation, show, handleClose }) => {
                           </td>
                           <td>
                             {formatCurrency(
-                              (serviceItem.service?.price || 0) * (serviceItem.quantity || 1)
+                              (serviceItem.service?.price || 0) * 
+                              (serviceItem.quantity || 1)
                             )}
                           </td>
                         </tr>
@@ -337,7 +340,7 @@ const TransactionDetail = ({ detailReservation, show, handleClose }) => {
                       </tr>
                     )}
 
-                    {/* Total Row */}
+                    {/* Total, Discount and Final Price Rows */}
                     <tr className="total-row">
                       <td colSpan={2}>
                         <strong>Total amount</strong>
@@ -357,6 +360,34 @@ const TransactionDetail = ({ detailReservation, show, handleClose }) => {
                         </strong>
                       </td>
                     </tr>
+
+                    {/* Show discount if applicable */}
+                    {detailReservation?.promotionDiscount > 0 && (
+                      <tr className="discount-row">
+                        <td colSpan={2}>
+                          <strong>Discount</strong>
+                        </td>
+                        <td colSpan={2}>
+                          <span style={{ color: 'red', fontWeight: 'bold' }}>
+                            -{formatCurrency(detailReservation.promotionDiscount)}
+                          </span>
+                        </td>
+                      </tr>
+                    )}
+
+                    {/* Show final price if there was a discount */}
+                    {detailReservation?.promotionDiscount > 0 && (
+                      <tr className="final-row">
+                        <td colSpan={2}>
+                          <strong>Total after discount</strong>
+                        </td>
+                        <td colSpan={2}>
+                          <strong style={{ color: 'green' }}>
+                            {formatCurrency(detailReservation.finalPrice)}
+                          </strong>
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </Table>
               </div>

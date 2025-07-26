@@ -98,15 +98,15 @@ const RevenuePage = () => {
         });
 
         const revenue = monthReservations.reduce((sum, res) => {
-          const price = res.finalPrice > 0 ? res.finalPrice : res.totalPrice;
-          return sum + price;
+          const price = res.promotionDiscount > 0 ? res.finalPrice : res.totalPrice;
+          return sum + (price || 0);
         }, 0);
 
         // Tính hoa hồng chỉ cho đơn online
         const onlineReservations = monthReservations.filter(res => res.status !== "OFFLINE");
         const onlineRevenue = onlineReservations.reduce((sum, res) => {
-          const price = res.finalPrice > 0 ? res.finalPrice : res.totalPrice;
-          return sum + price;
+          const price = res.promotionDiscount > 0 ? res.finalPrice : res.totalPrice;
+          return sum + (price || 0);
         }, 0);
         
         const commission = Math.floor(onlineRevenue * 0.12);
@@ -174,8 +174,8 @@ const RevenuePage = () => {
         }
 
         const roomRevenue = relevantReservations.reduce((sum, res) => {
-          const price = res.finalPrice > 0 ? res.finalPrice : res.totalPrice;
-          return sum + price;
+          const price = res.promotionDiscount > 0 ? res.finalPrice : res.totalPrice;
+          return sum + (price || 0);
         }, 0);
 
         const quantity = relevantReservations.reduce((sum, res) => 
